@@ -25,9 +25,13 @@ create table if not exists public.eventos (
   nome text not null,
   tipo text not null,
   data date not null,
+  status text not null default 'preview' check (status in ('draft', 'preview', 'paid', 'published', 'archived')),
   endereco jsonb not null default '{}'::jsonb,
   imagem_url text,
   site_gerado jsonb,
+  paid_at timestamptz,
+  published_at timestamptz,
+  paid_plan text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (owner_id, slug)
@@ -35,6 +39,7 @@ create table if not exists public.eventos (
 
 create index if not exists eventos_owner_idx on public.eventos (owner_id, created_at desc);
 create index if not exists eventos_slug_idx on public.eventos (slug);
+create index if not exists eventos_status_idx on public.eventos (status, created_at desc);
 
 -- ----- convidados ----------------------------------------------
 create table if not exists public.convidados (
@@ -74,7 +79,7 @@ create policy "eventos_owner_all" on public.eventos
 
 drop policy if exists "eventos_public_read" on public.eventos;
 create policy "eventos_public_read" on public.eventos
-  for select using (true);
+  for select using (status in ('paid', 'published'));
 
 -- convidados: dono do evento gerencia tudo; público pode inserir (RSVP)
 drop policy if exists "convidados_owner_select" on public.convidados;

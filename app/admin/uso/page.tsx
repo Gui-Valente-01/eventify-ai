@@ -21,6 +21,8 @@ export default async function AdminUso() {
               <th className="px-4 py-3 text-left font-semibold">Quando</th>
               <th className="px-4 py-3 text-left font-semibold">Usuário</th>
               <th className="px-4 py-3 text-left font-semibold">Modelo</th>
+              <th className="px-4 py-3 text-left font-semibold">Agentes</th>
+              <th className="px-4 py-3 text-right font-semibold">Qualidade</th>
               <th className="px-4 py-3 text-left font-semibold">Plano</th>
               <th className="px-4 py-3 text-right font-semibold">Tokens in</th>
               <th className="px-4 py-3 text-right font-semibold">Tokens out</th>
@@ -36,6 +38,13 @@ export default async function AdminUso() {
                 </td>
                 <td className="px-4 py-3 font-semibold">{l.nome}</td>
                 <td className="px-4 py-3 font-mono text-xs">{l.model}</td>
+                <td className="px-4 py-3 text-xs text-white/70">
+                  {l.generation_mode ?? "agent-company"}
+                  {l.provider ? <span className="ml-1 text-white/40">· {l.provider}</span> : null}
+                </td>
+                <td className="px-4 py-3 text-right tabular-nums">
+                  {typeof l.quality_score === "number" ? `${l.quality_score}/100` : "—"}
+                </td>
                 <td className="px-4 py-3 capitalize text-white/70">{l.plan ?? "—"}</td>
                 <td className="px-4 py-3 text-right tabular-nums">
                   {l.input_tokens.toLocaleString("pt-BR")}
@@ -61,7 +70,7 @@ export default async function AdminUso() {
             ))}
             {logs.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={10} className="px-4 py-8 text-center text-white/40">
                   Nenhuma chamada registrada ainda. Gere um site pra começar a popular.
                 </td>
               </tr>

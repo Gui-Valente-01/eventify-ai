@@ -4,4 +4,4 @@ import { supabaseBackend } from "./supabase";
 
 export const storage = isSupabaseConfigured ? supabaseBackend : localBackend;
 export { isSupabaseConfigured };
-export type { EventoDados, Endereco, StorageBackend } from "./types";
+export type { EventoDados, Endereco, EventStatus, StorageBackend } from "./types";

@@ -24,6 +24,7 @@ export default function BrandHeader({ actions = [] }: BrandHeaderProps) {
       acoesFinais = [
         { href: "/exemplos", label: "Exemplos", variant: "ghost" },
         { href: "/painel", label: "Painel", variant: "ghost" },
+        { href: "/perfil", label: "Meu perfil", variant: "ghost" },
       ];
     } else if (isConfigured) {
       acoesFinais = [

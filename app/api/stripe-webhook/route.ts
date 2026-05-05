@@ -37,14 +37,28 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as {
       client_reference_id?: string;
-      metadata?: { plan?: string; user_id?: string };
+      metadata?: { plan?: string; user_id?: string; event_id?: string; kind?: string };
     };
     const userId = session.metadata?.user_id || session.client_reference_id;
     const plan = session.metadata?.plan;
+    const eventId = session.metadata?.event_id;
 
-    if (userId && plan && supabaseUrl && serviceRoleKey) {
+    if (supabaseUrl && serviceRoleKey) {
       const admin = createClient(supabaseUrl, serviceRoleKey);
-      await admin.from("profiles").update({ plan }).eq("id", userId);
+      if (userId && plan) {
+        await admin.from("profiles").update({ plan }).eq("id", userId);
+      }
+      if (eventId) {
+        await admin
+          .from("eventos")
+          .update({
+            status: "published",
+            paid_at: new Date().toISOString(),
+            published_at: new Date().toISOString(),
+            paid_plan: plan || null,
+          })
+          .eq("id", eventId);
+      }
     }
   }
 

@@ -1,6 +1,9 @@
 import { selectEventTemplate, EventTemplate } from "./templates";
+import { runAgentCompany } from "@/lib/agents/orchestrator";
+import type { AgentRunSummary } from "@/lib/agents/types";
 
 export type EventoDados = {
+  id?: string;
   nome: string;
   tipo: string;
   data: string;
@@ -39,6 +42,10 @@ export type GeneratedSite = {
   seoTitle: string;
   seoDescription: string;
   generatedBy: "local-agent" | "claude" | "openai";
+  qualityScore?: number;
+  qualityWarnings?: string[];
+  businessSuggestions?: string[];
+  agentRun?: AgentRunSummary;
 };
 
 function formatDate(data?: string) {
@@ -121,8 +128,8 @@ function buildLocalCopy(evento: EventoDados, template: EventTemplate): Generated
 }
 
 export function generateSiteLocally(evento: EventoDados): GeneratedSite {
-  const template = selectEventTemplate(evento.tipo);
-  return buildLocalCopy(evento, template);
+  const result = runAgentCompany(evento);
+  return result.siteGerado;
 }
 
 export function buildEventAddress(evento: EventoDados) {

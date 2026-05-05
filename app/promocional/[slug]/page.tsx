@@ -8,6 +8,7 @@ import ShareButtons from "@/components/ShareButtons";
 import { useEventoPublico } from "@/hooks/useEventoPublico";
 import { buildPromoData } from "@/lib/promotionalTemplates";
 import { getTemplateId } from "@/lib/utils";
+import { getStatusLabel, isPublishedStatus } from "@/lib/publication";
 import { PROMO_VISUALS, TemplateId } from "@/lib/visuals";
 
 export default function Promocional() {
@@ -50,22 +51,36 @@ export default function Promocional() {
 
   // Modo IA: site customizado gerado pelo Claude
   if (evento.siteHtml) {
+    const publicado = isPublishedStatus(evento.status);
     return (
       <main className="min-h-screen bg-black">
         <div className="sticky top-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-[#1a0b3a] via-[#3a0e6e] to-[#7a1aab] px-4 py-2.5 text-white">
           <span className="text-xs font-bold sm:text-sm">
             <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-            Site gerado pela IA Claude
+            {publicado ? "Site publicado pela IA Claude" : `Preview Eventify AI · ${getStatusLabel(evento.status)}`}
           </span>
           <div className="flex items-center gap-2">
-            <Link href={`/cliente/${slug}`} className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold backdrop-blur transition hover:bg-white/25">
-              RSVP
-            </Link>
+            {publicado ? (
+              <Link href={`/cliente/${slug}`} className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold backdrop-blur transition hover:bg-white/25">
+                RSVP
+              </Link>
+            ) : (
+              <Link href="/painel" className="rounded-full bg-amber-300 px-3 py-1 text-xs font-black text-[#0a0414] transition hover:scale-105">
+                Publicar
+              </Link>
+            )}
             <Link href="/painel" className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#0a0414] transition hover:scale-105">
               ← Painel
             </Link>
           </div>
         </div>
+        {!publicado && (
+          <div className="pointer-events-none fixed inset-x-0 top-20 z-40 flex justify-center">
+            <span className="rounded-full border border-white/20 bg-black/50 px-5 py-2 text-xs font-black uppercase tracking-[0.24em] text-white/75 backdrop-blur">
+              Preview Eventify AI
+            </span>
+          </div>
+        )}
         <AiSiteFrame html={evento.siteHtml} titulo={evento.nome} />
       </main>
     );
@@ -74,6 +89,7 @@ export default function Promocional() {
   // Fallback: template-based
   const promoData = buildPromoData(evento);
   const visual = PROMO_VISUALS[getTemplateId(evento) as TemplateId] || PROMO_VISUALS.festa;
+  const publicado = isPublishedStatus(evento.status);
   const highlights = promoData.highlights?.length
     ? promoData.highlights
     : [promoData.cidade || "Local do evento", promoData.dataFormatada, promoData.highlight];
@@ -81,6 +97,11 @@ export default function Promocional() {
   return (
     <main className={visual.page}>
       <BrandHeader />
+      {!publicado && (
+        <div className="sticky top-[82px] z-30 border-y border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-bold text-amber-800">
+          Preview Eventify AI: este site ainda não está publicado. Publique no painel para liberar o link final e remover a marca.
+        </div>
+      )}
 
       <section className={visual.hero}>
         <div className="space-y-8">

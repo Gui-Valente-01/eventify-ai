@@ -1,13 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import {
-  generateSiteLocally,
-  EventoDados,
-  GeneratedSite,
-} from "@/lib/siteAgent";
+import { EventoDados, GeneratedSite } from "@/lib/siteAgent";
+import { runAgentCompany } from "@/lib/agents/orchestrator";
+import type { AgentCompanyResult, AgentRunSummary } from "@/lib/agents/types";
 import { selectEventTemplate } from "@/lib/templates";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { calcularCustoUSD, type TokenUsage } from "@/lib/aiPricing";
+import { checkPodeCriarEvento, checkPodeRegenerar } from "@/lib/planLimits";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -85,19 +84,24 @@ async function resolveContext(): Promise<{
 
 async function logUsage(args: {
   userId: string | null;
+  eventoId?: string | null;
   model: string;
   plan: Plan;
   usage: Usage;
   status: "ok" | "error";
   errorMessage?: string;
+  provider: "anthropic" | "local";
+  agentRun?: AgentRunSummary;
+  qualityScore?: number;
 }) {
   if (!args.userId) return;
   try {
     const supabase = await getSupabaseServerClient();
     if (!supabase) return;
     const cost = calcularCustoUSD(args.model, args.usage);
-    await supabase.from("usage_logs").insert({
+    const basePayload = {
       user_id: args.userId,
+      evento_id: args.eventoId ?? null,
       model: args.model,
       plan: args.plan,
       input_tokens: args.usage.inputTokens,
@@ -107,7 +111,20 @@ async function logUsage(args: {
       cost_usd: cost,
       status: args.status,
       error_message: args.errorMessage ?? null,
-    });
+    };
+    const payloadWithAgents = {
+      ...basePayload,
+      provider: args.provider,
+      generation_mode: "agent-company",
+      quality_score: args.qualityScore ?? args.agentRun?.quality.score ?? null,
+      agent_run: args.agentRun ?? null,
+    };
+    const { error } = await supabase.from("usage_logs").insert(payloadWithAgents);
+    if (error && /provider|generation_mode|quality_score|agent_run/i.test(error.message || "")) {
+      await supabase.from("usage_logs").insert(basePayload);
+    } else if (error) {
+      throw error;
+    }
   } catch (e) {
     console.error("[gerar-site] falha ao gravar usage_logs:", e);
   }
@@ -183,7 +200,7 @@ function formatarData(data?: string) {
   }
 }
 
-function buildUserPrompt(evento: EventoDados): string {
+function buildUserPrompt(evento: EventoDados, agentContext?: string): string {
   const e = evento.endereco || {};
   const b = evento.briefing || {};
   const detalhes = b.detalhes || {};
@@ -219,6 +236,9 @@ ${detalhesTexto || "(o cliente não preencheu detalhes — invente algo coerente
 
 ${evento.imagem ? `🖼️ IMAGEM DO EVENTO disponível em: ${evento.imagem} — use no hero como background ou destaque.` : ""}
 
+PLANO DOS AGENTES INTERNOS:
+${agentContext || "(sem plano estruturado)"}
+
 GERE AGORA o HTML completo do site. Comece LITERALMENTE com <!DOCTYPE html>. Não escreva nada antes.`;
 }
 
@@ -250,7 +270,8 @@ const COPY_SCHEMA = {
 async function generateCustomHTML(
   client: Anthropic,
   evento: EventoDados,
-  modelId: string
+  modelId: string,
+  agentContext: string
 ): Promise<{ html: string | null; usage: Usage; error?: string }> {
   try {
     const response = await client.messages.create({
@@ -263,7 +284,7 @@ async function generateCustomHTML(
           cache_control: { type: "ephemeral" },
         },
       ],
-      messages: [{ role: "user", content: buildUserPrompt(evento) }],
+      messages: [{ role: "user", content: buildUserPrompt(evento, agentContext) }],
     });
 
     const usage = extractUsage(response.usage);
@@ -329,7 +350,8 @@ async function generateCopyJSON(
 
 async function generateWithClaude(
   evento: EventoDados,
-  modelId: string
+  modelId: string,
+  localRun: AgentCompanyResult
 ): Promise<{
   copy: GeneratedSite | null;
   html: string | null;
@@ -342,10 +364,10 @@ async function generateWithClaude(
 
   const client = new Anthropic();
   const template = selectEventTemplate(evento.tipo);
-  const fallback = generateSiteLocally(evento);
+  const fallback = localRun.siteGerado as GeneratedSite;
 
   const [htmlRes, copyRes] = await Promise.all([
-    generateCustomHTML(client, evento, modelId),
+    generateCustomHTML(client, evento, modelId, localRun.promptContext),
     generateCopyJSON(client, evento, modelId),
   ]);
 
@@ -358,6 +380,14 @@ async function generateWithClaude(
         layout: template.layout,
         palette: template.palette,
         generatedBy: "claude",
+        qualityScore: localRun.agentRun.quality.score,
+        qualityWarnings: localRun.agentRun.quality.warnings,
+        businessSuggestions: localRun.agentRun.business.upsells,
+        agentRun: {
+          ...localRun.agentRun,
+          mode: "ai-assisted",
+          finishedAt: new Date().toISOString(),
+        },
       }
     : null;
 
@@ -385,17 +415,59 @@ export async function POST(req: Request) {
   }
 
   const { model, plan, userId } = await resolveContext();
-  const { copy, html, usage, error } = await generateWithClaude(evento, model);
-  const siteGerado = copy || generateSiteLocally(evento);
+
+  // ----- Validação de limites por plano (server-side) -----
+  if (userId) {
+    const supabase = await getSupabaseServerClient();
+    if (supabase) {
+      // Se NÃO tem evento.id, é criação nova → checa max_eventos
+      if (!evento.id) {
+        const { count: eventosCount } = await supabase
+          .from("eventos")
+          .select("id", { count: "exact", head: true })
+          .eq("owner_id", userId);
+        const podeCriar = checkPodeCriarEvento(plan, eventosCount ?? 0);
+        if (!podeCriar.ok) {
+          return NextResponse.json(
+            { error: podeCriar.message, code: podeCriar.code },
+            { status: 403 }
+          );
+        }
+      } else {
+        // Se tem evento.id, é regeneração → checa limite por evento
+        const { count: regenCount } = await supabase
+          .from("usage_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("evento_id", evento.id);
+        const podeRegenerar = checkPodeRegenerar(plan, regenCount ?? 0);
+        if (!podeRegenerar.ok) {
+          return NextResponse.json(
+            { error: podeRegenerar.message, code: podeRegenerar.code },
+            { status: 403 }
+          );
+        }
+      }
+    }
+  }
+
+  const localRun = runAgentCompany(evento);
+  const { copy, html, usage, error } = await generateWithClaude(evento, model, localRun);
+  const siteGerado = copy || (localRun.siteGerado as GeneratedSite);
+  const agentRun = siteGerado.agentRun || localRun.agentRun;
 
   if (process.env.ANTHROPIC_API_KEY) {
     void logUsage({
       userId,
+      eventoId: evento.id ?? null,
       model,
       plan,
       usage,
       status: error ? "error" : "ok",
       errorMessage: error,
+      provider: "anthropic",
+      agentRun,
+      qualityScore: siteGerado.qualityScore,
     });
   }
 
@@ -403,6 +475,9 @@ export async function POST(req: Request) {
     siteGerado,
     siteHtml: html,
     promoData: siteGerado,
+    agentRun,
+    quality: agentRun.quality,
+    business: agentRun.business,
     aiAvailable: Boolean(process.env.ANTHROPIC_API_KEY),
     model,
     plan,

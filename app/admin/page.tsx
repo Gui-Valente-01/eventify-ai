@@ -22,6 +22,27 @@ export default async function AdminDashboard() {
           accent="purple"
         />
         <StatCard
+          label="Sites pagos"
+          value={snap.totals.pagos.toLocaleString("pt-BR")}
+          hint={`${snap.totals.publicados} publicados · ${snap.totals.conversaoPreviewPago}% conversão`}
+          accent="green"
+        />
+        <StatCard
+          label="Receita estimada"
+          value={snap.totals.receitaBrl.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          hint={`Lucro estimado: ${snap.totals.lucroEstimadoBrl.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`}
+          accent="blue"
+        />
+        <StatCard
+          label="Previews em aberto"
+          value={snap.totals.previews.toLocaleString("pt-BR")}
+          hint="oportunidade de venda"
+          accent="amber"
+        />
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
           label="Usuários cadastrados"
           value={snap.totals.usuarios.toLocaleString("pt-BR")}
           accent="blue"

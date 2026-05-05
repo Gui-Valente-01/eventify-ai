@@ -28,11 +28,15 @@ create table public.eventos (
   nome text not null,
   tipo text not null,
   data date not null,
+  status text not null default 'preview' check (status in ('draft', 'preview', 'paid', 'published', 'archived')),
   endereco jsonb not null default '{}'::jsonb,
   imagem_url text,
   briefing jsonb default '{}'::jsonb,
   site_gerado jsonb,
   site_html text,
+  paid_at timestamptz,
+  published_at timestamptz,
+  paid_plan text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (owner_id, slug)
@@ -40,6 +44,7 @@ create table public.eventos (
 
 create index eventos_owner_idx on public.eventos (owner_id, created_at desc);
 create index eventos_slug_idx on public.eventos (slug);
+create index eventos_status_idx on public.eventos (status, created_at desc);
 
 -- ---------- convidados ---------------------------------------
 create table public.convidados (
@@ -69,7 +74,7 @@ create policy "profiles_self_update" on public.profiles
 create policy "eventos_owner_all" on public.eventos
   for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 create policy "eventos_public_read" on public.eventos
-  for select using (true);
+  for select using (status in ('paid', 'published'));
 
 create policy "convidados_owner_select" on public.convidados
   for select using (

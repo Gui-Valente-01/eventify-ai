@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { PLANS } from "@/lib/plans";
 
 type UsageRow = {
   id: string;
@@ -11,6 +12,10 @@ type UsageRow = {
   cache_read_tokens: number;
   cache_write_tokens: number;
   cost_usd: string | number;
+  provider?: string | null;
+  generation_mode?: string | null;
+  quality_score?: number | null;
+  agent_run?: unknown;
   status: "ok" | "error";
   created_at: string;
 };
@@ -30,6 +35,8 @@ type EventoRow = {
   tipo: string;
   data: string;
   slug: string;
+  status?: string | null;
+  paid_plan?: string | null;
   created_at: string;
 };
 
@@ -41,6 +48,12 @@ export type AdminSnapshot = {
     custoUsdMes: number;
     custoUsd30d: number;
     callsMes: number;
+    pagos: number;
+    publicados: number;
+    previews: number;
+    receitaBrl: number;
+    lucroEstimadoBrl: number;
+    conversaoPreviewPago: number;
   };
   byPlan: Array<{ plan: string; usuarios: number; eventos: number; custoUsd: number }>;
   byModel: Array<{ model: string; calls: number; custoUsd: number; tokensIn: number; tokensOut: number }>;
@@ -74,13 +87,17 @@ function startOfMonth(): string {
   return new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
 }
 
+function planPrice(plan?: string | null) {
+  return PLANS.find((p) => p.id === plan)?.preco ?? 0;
+}
+
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   const supabase = await getSupabaseServerClient();
   if (!supabase) throw new Error("Supabase não configurado.");
 
   const [profilesRes, eventosRes, usageRes] = await Promise.all([
     supabase.from("profiles").select("id, full_name, plan, is_admin, created_at"),
-    supabase.from("eventos").select("id, owner_id, nome, tipo, data, slug, created_at"),
+    supabase.from("eventos").select("id, owner_id, nome, tipo, data, slug, status, paid_plan, created_at"),
     supabase.from("usage_logs").select("*").order("created_at", { ascending: false }),
   ]);
 
@@ -97,6 +114,12 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   const sumCost = (rows: UsageRow[]) =>
     rows.reduce((acc, r) => acc + Number(r.cost_usd ?? 0), 0);
 
+  const pagos = eventos.filter((e) => e.status === "paid" || e.status === "published").length;
+  const publicados = eventos.filter((e) => e.status === "published").length;
+  const previews = eventos.filter((e) => !e.status || e.status === "preview" || e.status === "draft").length;
+  const receitaBrl = eventos.reduce((sum, e) => sum + planPrice(e.paid_plan), 0);
+  const custoIaBrl = sumCost(usage) * 5.4;
+
   const totals = {
     eventos: eventos.length,
     usuarios: profiles.length,
@@ -104,6 +127,12 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
     custoUsdMes: sumCost(usageMes),
     custoUsd30d: sumCost(usage30d),
     callsMes: usageMes.length,
+    pagos,
+    publicados,
+    previews,
+    receitaBrl,
+    lucroEstimadoBrl: receitaBrl - custoIaBrl,
+    conversaoPreviewPago: eventos.length > 0 ? Math.round((pagos / eventos.length) * 100) : 0,
   };
 
   // ----- Por plano -----
@@ -230,7 +259,7 @@ export async function getAllEventos() {
   const [eventosRes, profilesRes] = await Promise.all([
     supabase
       .from("eventos")
-      .select("id, owner_id, nome, tipo, data, slug, created_at")
+      .select("id, owner_id, nome, tipo, data, slug, status, paid_plan, created_at")
       .order("created_at", { ascending: false })
       .limit(200),
     supabase.from("profiles").select("id, full_name, plan"),

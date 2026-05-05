@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { gerarSlug } from "@/lib/utils";
+import { normalizeStatus } from "@/lib/publication";
 import type { EventoDados, StorageBackend } from "./types";
 
 type EventoRow = {
@@ -9,11 +10,15 @@ type EventoRow = {
   nome: string;
   tipo: string;
   data: string;
+  status: EventoDados["status"] | null;
   endereco: EventoDados["endereco"] | null;
   imagem_url: string | null;
   briefing: EventoDados["briefing"] | null;
   site_gerado: EventoDados["siteGerado"] | null;
   site_html: string | null;
+  paid_at: string | null;
+  published_at: string | null;
+  paid_plan: string | null;
 };
 
 function getClient() {
@@ -28,6 +33,7 @@ function rowToEvento(row: EventoRow, convidados: string[] = []): EventoDados {
     nome: row.nome,
     tipo: row.tipo,
     data: row.data,
+    status: normalizeStatus(row.status),
     endereco: row.endereco ?? {},
     imagem: row.imagem_url ?? "",
     briefing: row.briefing ?? {},
@@ -35,6 +41,9 @@ function rowToEvento(row: EventoRow, convidados: string[] = []): EventoDados {
     siteGerado: row.site_gerado ?? undefined,
     siteHtml: row.site_html ?? undefined,
     ownerId: row.owner_id,
+    paidAt: row.paid_at ?? undefined,
+    publishedAt: row.published_at ?? undefined,
+    paidPlan: row.paid_plan ?? undefined,
   };
 }
 
@@ -106,6 +115,7 @@ export const supabaseBackend: StorageBackend = {
         nome: evento.nome,
         tipo: evento.tipo,
         data: evento.data,
+        status: evento.status ?? "preview",
         endereco: evento.endereco ?? {},
         imagem_url: evento.imagem || null,
         briefing: evento.briefing ?? {},
@@ -132,11 +142,15 @@ export const supabaseBackend: StorageBackend = {
     }
     if (partial.tipo !== undefined) updates.tipo = partial.tipo;
     if (partial.data !== undefined) updates.data = partial.data;
+    if (partial.status !== undefined) updates.status = partial.status;
     if (partial.endereco !== undefined) updates.endereco = partial.endereco;
     if (partial.imagem !== undefined) updates.imagem_url = partial.imagem || null;
     if (partial.briefing !== undefined) updates.briefing = partial.briefing;
     if (partial.siteGerado !== undefined) updates.site_gerado = partial.siteGerado;
     if (partial.siteHtml !== undefined) updates.site_html = partial.siteHtml;
+    if (partial.paidAt !== undefined) updates.paid_at = partial.paidAt;
+    if (partial.publishedAt !== undefined) updates.published_at = partial.publishedAt;
+    if (partial.paidPlan !== undefined) updates.paid_plan = partial.paidPlan;
 
     const { data, error } = await supabase
       .from("eventos")

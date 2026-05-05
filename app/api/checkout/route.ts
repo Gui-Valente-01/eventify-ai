@@ -9,7 +9,7 @@ const STRIPE_PRICE_IDS: Record<PlanId, string | undefined> = {
 };
 
 export async function POST(req: Request) {
-  let body: { planId?: PlanId };
+  let body: { planId?: PlanId; eventId?: string };
   try {
     body = await req.json();
   } catch {
@@ -37,6 +37,25 @@ export async function POST(req: Request) {
 
   const supabase = await getSupabaseServerClient();
   const user = supabase ? (await supabase.auth.getUser()).data.user : null;
+  let evento: { id: string; slug: string; nome: string } | null = null;
+
+  if (body.eventId) {
+    if (!user || !supabase) {
+      return NextResponse.json({ error: "Faça login para publicar este evento." }, { status: 401 });
+    }
+
+    const { data, error } = await supabase
+      .from("eventos")
+      .select("id, slug, nome, status")
+      .eq("id", body.eventId)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: "Evento não encontrado ou sem permissão." }, { status: 404 });
+    }
+
+    evento = data as { id: string; slug: string; nome: string };
+  }
 
   const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -45,13 +64,20 @@ export async function POST(req: Request) {
       "mode": "payment",
       "line_items[0][price]": priceId,
       "line_items[0][quantity]": "1",
-      "success_url": `${origin}/painel?checkout=success&plan=${planId}`,
-      "cancel_url": `${origin}/precos?checkout=cancel`,
+      "success_url": evento
+        ? `${origin}/painel?checkout=success&event=${evento.id}`
+        : `${origin}/painel?checkout=success&plan=${planId}`,
+      "cancel_url": evento
+        ? `${origin}/painel?checkout=cancel&event=${evento.id}`
+        : `${origin}/precos?checkout=cancel`,
     });
     if (user?.email) params.append("customer_email", user.email);
     if (user?.id) params.append("client_reference_id", user.id);
     params.append("metadata[plan]", planId);
+    params.append("metadata[kind]", evento ? "event_publish" : "plan_purchase");
     if (user?.id) params.append("metadata[user_id]", user.id);
+    if (evento?.id) params.append("metadata[event_id]", evento.id);
+    if (evento?.slug) params.append("metadata[event_slug]", evento.slug);
 
     const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
 import { useEventoPublico } from "@/hooks/useEventoPublico";
 import { formatarData, getTemplateId } from "@/lib/utils";
+import { isPublishedStatus, getStatusLabel } from "@/lib/publication";
 import { CLIENT_VISUALS, TemplateId } from "@/lib/visuals";
 
 export default function PaginaCliente() {
@@ -39,6 +40,31 @@ export default function PaginaCliente() {
             <span className="eventify-kicker">Evento</span>
             <h1 className="eventify-title mt-5 text-4xl">Evento não encontrado</h1>
             <p className="eventify-muted mt-3">Confira se o link recebido está correto.</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (!isPublishedStatus(evento.status)) {
+    return (
+      <main className="eventify-page">
+        <BrandHeader />
+        <section className="eventify-section flex justify-center">
+          <div className="eventify-card max-w-2xl p-10 text-center">
+            <span className="eventify-kicker">Preview protegido</span>
+            <h1 className="eventify-title mt-5 text-4xl">Este site ainda não foi publicado</h1>
+            <p className="eventify-muted mt-4 text-lg">
+              Status atual: <strong>{getStatusLabel(evento.status)}</strong>. O link final dos convidados fica liberado depois do pagamento/publicação.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <a href={`/promocional/${slug}`} className="eventify-button eventify-button-ghost">
+                Ver preview
+              </a>
+              <a href="/painel" className="eventify-button eventify-button-primary">
+                Publicar no painel
+              </a>
+            </div>
           </div>
         </section>
       </main>

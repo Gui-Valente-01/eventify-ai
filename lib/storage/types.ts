@@ -17,11 +17,14 @@ export type Briefing = {
   detalhes?: Record<string, string>;
 };
 
+export type EventStatus = "draft" | "preview" | "paid" | "published" | "archived";
+
 export type EventoDados = {
   id?: string;
   nome: string;
   tipo: string;
   data: string;
+  status?: EventStatus;
   endereco?: Endereco;
   imagem?: string;
   briefing?: Briefing;
@@ -29,6 +32,9 @@ export type EventoDados = {
   siteGerado?: GeneratedSite;
   siteHtml?: string;
   ownerId?: string;
+  paidAt?: string;
+  publishedAt?: string;
+  paidPlan?: string;
 };
 
 export type StorageBackend = {

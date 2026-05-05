@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useEventos } from "@/hooks/useEventos";
 import { gerarSlug } from "@/lib/utils";
 import { gerarSiteAPI } from "@/lib/api";
+import { getStatusLabel, isPublishedStatus } from "@/lib/publication";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
 
@@ -13,12 +14,13 @@ function PainelInner() {
   const searchParams = useSearchParams();
   const { eventos, atualizarEvento, deletarEvento, isLoading } = useEventos();
   const [regenerandoIndex, setRegenerandoIndex] = useState<number | null>(null);
+  const [publicandoIndex, setPublicandoIndex] = useState<number | null>(null);
   const [aviso, setAviso] = useState<{ tipo: "erro" | "ok" | "aviso"; texto: string } | null>(null);
 
   useEffect(() => {
     const checkout = searchParams.get("checkout");
     if (checkout === "success") {
-      setAviso({ tipo: "ok", texto: "Pagamento confirmado! Seu plano foi atualizado." });
+      setAviso({ tipo: "ok", texto: "Pagamento confirmado! Assim que o Stripe avisar o webhook, o site fica publicado." });
     } else if (checkout === "cancel") {
       setAviso({ tipo: "aviso", texto: "Pagamento cancelado. Você pode tentar novamente quando quiser." });
     }
@@ -92,6 +94,41 @@ function PainelInner() {
 
     setRegenerandoIndex(null);
     setTimeout(() => setAviso(null), 5000);
+  }
+
+  async function publicarEvento(index: number) {
+    if (publicandoIndex !== null) return;
+    const evento = eventos[index];
+    if (!evento?.id) {
+      setAviso({ tipo: "erro", texto: "Evento sem identificador. Salve novamente antes de publicar." });
+      return;
+    }
+
+    setPublicandoIndex(index);
+    setAviso(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId: "intermediario", eventId: evento.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAviso({ tipo: "erro", texto: data.error || "Não foi possível iniciar o checkout." });
+      } else if (data.url) {
+        window.location.href = data.url;
+        return;
+      } else {
+        setAviso({
+          tipo: "aviso",
+          texto: data.message || "Configure o Stripe para ativar a publicação paga.",
+        });
+      }
+    } catch {
+      setAviso({ tipo: "erro", texto: "Erro de rede ao iniciar checkout." });
+    } finally {
+      setPublicandoIndex(null);
+    }
   }
 
   if (isLoading) {
@@ -170,7 +207,18 @@ function PainelInner() {
                 <div className="p-6">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-2xl font-black text-[#090814]">{evento.nome}</h2>
-                    <span className="rounded-full bg-[#f0ddff] px-3 py-1 text-sm font-bold text-[#8847e7]">{evento.tipo}</span>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-[#f0ddff] px-3 py-1 text-sm font-bold text-[#8847e7]">{evento.tipo}</span>
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-bold ${
+                          isPublishedStatus(evento.status)
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {getStatusLabel(evento.status)}
+                      </span>
+                    </div>
                   </div>
                   <div className="eventify-muted mt-4 space-y-2 text-sm">
                     <p>📅 {evento.data}</p>
@@ -184,7 +232,18 @@ function PainelInner() {
                         ? `Site gerado via ${evento.siteGerado.generatedBy === "claude" ? "Claude" : evento.siteGerado.generatedBy}`
                         : "Site ainda não gerado — clique em Regenerar IA"}
                     </p>
+                    {typeof evento.siteGerado?.qualityScore === "number" && (
+                      <p>Qualidade dos agentes: {evento.siteGerado.qualityScore}/100</p>
+                    )}
                   </div>
+                  {!isPublishedStatus(evento.status) && (
+                    <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm font-black text-amber-800">Preview gratuito ativo</p>
+                      <p className="mt-1 text-sm text-amber-700">
+                        Publique para liberar o link final dos convidados, QR Code limpo e remover a marca d'água.
+                      </p>
+                    </div>
+                  )}
                   {evento.convidados && evento.convidados.length > 0 && (
                     <div className="mt-5 rounded-2xl border border-[#e8e3f1] bg-[#faf9ff] p-4">
                       <p className="text-sm font-black text-[#090814]">Convidados confirmados</p>
@@ -228,6 +287,21 @@ function PainelInner() {
                         <>✨ Regenerar IA</>
                       )}
                     </button>
+                    {!isPublishedStatus(evento.status) && (
+                      <button
+                        onClick={() => publicarEvento(index)}
+                        disabled={publicandoIndex !== null}
+                        className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {publicandoIndex === index ? (
+                          <>
+                            <Spinner className="h-4 w-4" /> Abrindo checkout...
+                          </>
+                        ) : (
+                          <>Publicar por R$49</>
+                        )}
+                      </button>
+                    )}
                     <button onClick={() => apagarEvento(index)} className="rounded-xl border border-red-100 bg-red-50 px-4 py-2 text-sm font-bold text-red-600 transition hover:bg-red-100">
                       Apagar
                     </button>

@@ -1,4 +1,5 @@
 import { gerarSlug } from "@/lib/utils";
+import { normalizeStatus } from "@/lib/publication";
 import type { EventoDados, StorageBackend } from "./types";
 
 const KEY = "eventos";
@@ -19,12 +20,12 @@ function write(list: EventoDados[]) {
 }
 
 function ensureId(e: EventoDados): EventoDados {
-  if (e.id) return e;
+  if (e.id) return { ...e, status: normalizeStatus(e.status) };
   const id =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  return { ...e, id };
+  return { ...e, id, status: normalizeStatus(e.status) };
 }
 
 export const localBackend: StorageBackend = {
@@ -36,7 +37,7 @@ export const localBackend: StorageBackend = {
     return found ? ensureId(found) : null;
   },
   async create(evento) {
-    const withId = ensureId(evento);
+    const withId = ensureId({ ...evento, status: evento.status ?? "preview" });
     const list = read();
     list.push(withId);
     write(list);

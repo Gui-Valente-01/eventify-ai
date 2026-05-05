@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
 import { useEventos, EventoDados } from "@/hooks/useEventos";
-import { buscarCEP, dataMinimaHoje, mascararCEP } from "@/lib/utils";
+import { buscarCEP, dataMinimaHoje, gerarSlug, mascararCEP } from "@/lib/utils";
 import { gerarSiteAPI } from "@/lib/api";
 import { TIPOS_EVENTO, getBriefingSchema } from "@/lib/eventBriefings";
 
@@ -147,6 +147,7 @@ export default function NovoEvento() {
         nome: nome.trim(),
         data,
         tipo,
+        status: "preview",
         imagem: imagemUrl,
         endereco: { cep, rua, numero, cidade, estado },
         briefing: {
@@ -164,7 +165,7 @@ export default function NovoEvento() {
       if (resultado.siteGerado) novoEvento.siteGerado = resultado.siteGerado;
       if (resultado.siteHtml) novoEvento.siteHtml = resultado.siteHtml;
 
-      await adicionarEvento(novoEvento);
+      const salvo = await adicionarEvento(novoEvento);
 
       if (!resultado.aiAvailable && !resultado.erro) {
         setAviso({
@@ -172,11 +173,11 @@ export default function NovoEvento() {
           texto:
             "Site criado com agente local. Configure ANTHROPIC_API_KEY para conteúdo gerado por Claude.",
         });
-        setTimeout(() => router.push("/painel"), 1500);
+        setTimeout(() => router.push(`/evento/${gerarSlug(salvo.nome)}/pronto`), 1500);
         return;
       }
 
-      router.push("/painel");
+      router.push(`/evento/${gerarSlug(salvo.nome)}/pronto`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro ao criar evento.";
       setAviso({ tipo: "erro", texto: msg });

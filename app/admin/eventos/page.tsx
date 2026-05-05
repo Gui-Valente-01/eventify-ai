@@ -21,6 +21,7 @@ export default async function AdminEventos() {
               <th className="px-4 py-3 text-left font-semibold">Nome</th>
               <th className="px-4 py-3 text-left font-semibold">Tipo</th>
               <th className="px-4 py-3 text-left font-semibold">Data evento</th>
+              <th className="px-4 py-3 text-left font-semibold">Status</th>
               <th className="px-4 py-3 text-left font-semibold">Dono</th>
               <th className="px-4 py-3 text-left font-semibold">Plano</th>
               <th className="px-4 py-3 text-left font-semibold">Criado</th>
@@ -34,6 +35,11 @@ export default async function AdminEventos() {
                 <td className="px-4 py-3 text-white/70">{e.tipo}</td>
                 <td className="px-4 py-3 text-white/70">
                   {new Date(e.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                </td>
+                <td className="px-4 py-3">
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-bold uppercase text-white/70">
+                    {e.status ?? "preview"}
+                  </span>
                 </td>
                 <td className="px-4 py-3">{e.dono}</td>
                 <td className="px-4 py-3 capitalize text-white/70">{e.plan}</td>
@@ -53,7 +59,7 @@ export default async function AdminEventos() {
             ))}
             {eventos.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-white/40">
+                <td colSpan={8} className="px-4 py-8 text-center text-white/40">
                   Nenhum evento ainda
                 </td>
               </tr>

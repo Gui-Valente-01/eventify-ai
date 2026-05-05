@@ -20,14 +20,26 @@ create table if not exists public.usage_logs (
   cache_read_tokens integer not null default 0,
   cache_write_tokens integer not null default 0,
   cost_usd numeric(10,6) not null default 0,
+  provider text not null default 'anthropic',
+  generation_mode text not null default 'agent-company',
+  quality_score integer,
+  agent_run jsonb,
   status text not null default 'ok' check (status in ('ok', 'error')),
   error_message text,
   created_at timestamptz not null default now()
 );
 
+alter table public.usage_logs
+  add column if not exists provider text not null default 'anthropic',
+  add column if not exists generation_mode text not null default 'agent-company',
+  add column if not exists quality_score integer,
+  add column if not exists agent_run jsonb;
+
 create index if not exists usage_logs_user_idx on public.usage_logs (user_id, created_at desc);
 create index if not exists usage_logs_evento_idx on public.usage_logs (evento_id);
 create index if not exists usage_logs_created_idx on public.usage_logs (created_at desc);
+create index if not exists usage_logs_provider_idx on public.usage_logs (provider, created_at desc);
+create index if not exists usage_logs_quality_idx on public.usage_logs (quality_score);
 
 -- ---------- RLS na usage_logs --------------------------------
 alter table public.usage_logs enable row level security;
@@ -67,3 +79,5 @@ create policy "convidados_admin_read" on public.convidados
 
 comment on table public.usage_logs is 'Log de cada chamada à API Claude — usado pra dashboard de admin.';
 comment on column public.profiles.is_admin is 'Quando true, dá acesso ao /admin e leitura de todos os dados.';
+comment on column public.usage_logs.agent_run is 'Snapshot JSON do orquestrador de agentes usado na geracao.';
+comment on column public.usage_logs.quality_score is 'Nota de qualidade calculada pelo agente de otimizacao.';
