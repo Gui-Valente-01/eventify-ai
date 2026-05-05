@@ -1,0 +1,211 @@
+import type { EventoDados } from "@/lib/storage/types";
+
+export type SampleEvent = EventoDados & {
+  slug: string;
+  destaque: string;
+  emoji: string;
+  imagemBg: string;
+};
+
+export const SAMPLE_EVENTS: SampleEvent[] = [
+  {
+    slug: "casamento-mariana-e-rafael",
+    nome: "Mariana & Rafael",
+    tipo: "Casamento",
+    data: "2026-08-15",
+    destaque: "Editorial romântico em Curitiba",
+    emoji: "♡",
+    imagemBg: "linear-gradient(135deg, #fbcfe8 0%, #fde68a 50%, #ffffff 100%)",
+    endereco: {
+      cep: "80060-070",
+      rua: "Vinhedo Bella Vista",
+      numero: "320",
+      cidade: "Curitiba",
+      estado: "PR",
+    },
+    convidados: ["Ana Costa", "Bruno Lima", "Camila Souza", "Diego Reis"],
+    siteGerado: {
+      templateId: "casamento",
+      templateName: "Casamento",
+      layout: "elegant",
+      palette: {
+        primary: "#b76e79",
+        secondary: "#d6a85d",
+        soft: "#fff3f6",
+        text: "#24151a",
+        gradient: "from-rose-50 via-white to-amber-50",
+      },
+      heroTitle: "Mariana & Rafael",
+      subtitle: "Uma celebração íntima em Curitiba, no dia 15 de agosto de 2026.",
+      description:
+        "Cinco anos de história ganham um capítulo inesquecível em uma cerimônia ao ar livre, com pôr do sol, vinho da serra e brindes ao novo começo.",
+      invitationMessage: "Sua presença é o presente que vamos guardar para sempre.",
+      highlights: ["Cerimônia no jardim", "Jantar harmonizado", "Pista até o amanhecer"],
+      ctaLabel: "Confirmar presença",
+      seoTitle: "Mariana & Rafael — Casamento em Curitiba",
+      seoDescription: "Site oficial do casamento de Mariana e Rafael. Confirme sua presença.",
+      generatedBy: "claude",
+    },
+  },
+  {
+    slug: "aniversario-helena-15-anos",
+    nome: "Helena 15 anos",
+    tipo: "Aniversário",
+    data: "2026-09-22",
+    destaque: "Festa colorida e vibrante",
+    emoji: "♕",
+    imagemBg: "linear-gradient(135deg, #fde68a 0%, #fb923c 50%, #fb7185 100%)",
+    endereco: {
+      cep: "30130-110",
+      rua: "Espaço Sunset Hall",
+      numero: "180",
+      cidade: "Belo Horizonte",
+      estado: "MG",
+    },
+    convidados: ["Mel Faria", "Gabi Torres", "João Pedro", "Marina Silva", "Lucas Mota"],
+    siteGerado: {
+      templateId: "aniversario",
+      templateName: "Aniversário",
+      layout: "vibrant",
+      palette: {
+        primary: "#f59e0b",
+        secondary: "#ef4444",
+        soft: "#fff7dc",
+        text: "#24180a",
+        gradient: "from-amber-50 via-white to-orange-50",
+      },
+      heroTitle: "Helena chega aos 15!",
+      subtitle: "Uma noite cheia de luz, dança e amigos em Belo Horizonte.",
+      description:
+        "Bolo gigante, cabine de fotos, DJ até de madrugada e uma surpresa que ninguém vai esquecer. Vem comemorar essa virada especial.",
+      invitationMessage: "Coloca a roupa preferida e prepara o coração — vai ser inesquecível.",
+      highlights: ["DJ ao vivo", "Cabine de fotos", "Cardápio gourmet"],
+      ctaLabel: "Quero participar",
+      seoTitle: "Helena 15 anos — Festa em BH",
+      seoDescription: "Confirme presença na festa de 15 anos da Helena.",
+      generatedBy: "claude",
+    },
+  },
+  {
+    slug: "summit-tech-ai-2026",
+    nome: "Summit Tech AI 2026",
+    tipo: "Evento Corporativo",
+    data: "2026-10-08",
+    destaque: "Conferência premium em São Paulo",
+    emoji: "▣",
+    imagemBg: "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 50%, #ffffff 100%)",
+    endereco: {
+      cep: "04543-011",
+      rua: "Av. Brigadeiro Faria Lima",
+      numero: "3477",
+      cidade: "São Paulo",
+      estado: "SP",
+    },
+    convidados: ["Aline Mendes", "Carlos Drummond", "Patricia Yu"],
+    siteGerado: {
+      templateId: "corporativo",
+      templateName: "Corporativo",
+      layout: "minimal",
+      palette: {
+        primary: "#2563eb",
+        secondary: "#475569",
+        soft: "#eff6ff",
+        text: "#0f172a",
+        gradient: "from-blue-50 via-white to-slate-50",
+      },
+      heroTitle: "Summit Tech AI 2026",
+      subtitle:
+        "O encontro definitivo sobre inteligência artificial generativa no Brasil. Faria Lima · 8 de outubro.",
+      description:
+        "Um dia inteiro com líderes de produto, fundadores e pesquisadores compartilhando como a IA está reescrevendo cada indústria — e como sua empresa pode liderar a virada.",
+      invitationMessage: "Garanta seu lugar nesse encontro estratégico.",
+      highlights: ["18 keynotes", "Networking premium", "Conteúdo exclusivo"],
+      ctaLabel: "Reservar lugar",
+      seoTitle: "Summit Tech AI 2026 — São Paulo",
+      seoDescription: "Conferência de IA com keynotes, painéis e networking premium.",
+      generatedBy: "claude",
+    },
+  },
+  {
+    slug: "neon-night-festival",
+    nome: "Neon Night Festival",
+    tipo: "Festa",
+    data: "2026-11-14",
+    destaque: "Experiência noturna eletrizante",
+    emoji: "✦",
+    imagemBg: "linear-gradient(135deg, #4c1d95 0%, #db2777 50%, #f97316 100%)",
+    endereco: {
+      cep: "22290-160",
+      rua: "Marina da Glória",
+      numero: "S/N",
+      cidade: "Rio de Janeiro",
+      estado: "RJ",
+    },
+    convidados: ["Felipe Costa", "Bia Andrade", "Renato Lobo", "Sofia Pires", "Theo Reis", "Vinícius Yamada"],
+    siteGerado: {
+      templateId: "festa",
+      templateName: "Festa",
+      layout: "celebration",
+      palette: {
+        primary: "#8847e7",
+        secondary: "#ec4899",
+        soft: "#f4e8ff",
+        text: "#13071f",
+        gradient: "from-violet-50 via-white to-fuchsia-50",
+      },
+      heroTitle: "Neon Night Festival",
+      subtitle: "Uma noite na Marina da Glória com lineup internacional, drinks de assinatura e visuais imersivos.",
+      description:
+        "Três pistas, oito DJs, instalações de luz que reagem à música e o melhor pôr do sol da cidade. Conhece sua tribo? Chama todo mundo.",
+      invitationMessage: "Bota a roupa que brilha e vem viver essa.",
+      highlights: ["Lineup internacional", "3 pistas temáticas", "Open bar premium"],
+      ctaLabel: "Eu vou!",
+      seoTitle: "Neon Night Festival — Rio de Janeiro",
+      seoDescription: "Festival eletrizante na Marina da Glória.",
+      generatedBy: "claude",
+    },
+  },
+  {
+    slug: "encontro-de-fe-comunidade-luz",
+    nome: "Encontro de Fé — Comunidade Luz",
+    tipo: "Religioso",
+    data: "2026-12-01",
+    destaque: "Celebração serena e acolhedora",
+    emoji: "✓",
+    imagemBg: "linear-gradient(135deg, #d1fae5 0%, #fef3c7 50%, #ffffff 100%)",
+    endereco: {
+      cep: "40020-000",
+      rua: "Centro de Convivência Vila Esperança",
+      numero: "45",
+      cidade: "Salvador",
+      estado: "BA",
+    },
+    convidados: ["Família Sousa", "Família Oliveira", "Família Cardoso"],
+    siteGerado: {
+      templateId: "religioso",
+      templateName: "Religioso",
+      layout: "serene",
+      palette: {
+        primary: "#059669",
+        secondary: "#84cc16",
+        soft: "#ecfdf5",
+        text: "#052e1d",
+        gradient: "from-emerald-50 via-white to-lime-50",
+      },
+      heroTitle: "Encontro de Fé · Comunidade Luz",
+      subtitle: "Um momento de comunhão em Salvador, no dia 1º de dezembro.",
+      description:
+        "Mensagens de gratidão, música ao vivo conduzida pelo coral da comunidade, almoço compartilhado e roda de conversa. Traga a família.",
+      invitationMessage: "Sua presença ilumina nosso encontro.",
+      highlights: ["Coral ao vivo", "Almoço comunitário", "Roda de conversa"],
+      ctaLabel: "Confirmar presença",
+      seoTitle: "Encontro de Fé — Comunidade Luz",
+      seoDescription: "Celebração de gratidão e comunhão em Salvador.",
+      generatedBy: "claude",
+    },
+  },
+];
+
+export function getSampleEvent(slug: string): SampleEvent | undefined {
+  return SAMPLE_EVENTS.find((e) => e.slug === slug);
+}
