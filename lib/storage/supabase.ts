@@ -13,6 +13,7 @@ type EventoRow = {
   status: EventoDados["status"] | null;
   endereco: EventoDados["endereco"] | null;
   imagem_url: string | null;
+  selected_plan: string | null;
   briefing: EventoDados["briefing"] | null;
   site_gerado: EventoDados["siteGerado"] | null;
   site_html: string | null;
@@ -36,6 +37,7 @@ function rowToEvento(row: EventoRow, convidados: string[] = []): EventoDados {
     status: normalizeStatus(row.status),
     endereco: row.endereco ?? {},
     imagem: row.imagem_url ?? "",
+    selectedPlan: row.selected_plan ?? undefined,
     briefing: row.briefing ?? {},
     convidados,
     siteGerado: row.site_gerado ?? undefined,
@@ -118,6 +120,7 @@ export const supabaseBackend: StorageBackend = {
         status: evento.status ?? "preview",
         endereco: evento.endereco ?? {},
         imagem_url: evento.imagem || null,
+        selected_plan: evento.selectedPlan ?? evento.briefing?.planoSelecionado ?? null,
         briefing: evento.briefing ?? {},
         site_gerado: evento.siteGerado ?? null,
         site_html: evento.siteHtml ?? null,
@@ -145,6 +148,7 @@ export const supabaseBackend: StorageBackend = {
     if (partial.status !== undefined) updates.status = partial.status;
     if (partial.endereco !== undefined) updates.endereco = partial.endereco;
     if (partial.imagem !== undefined) updates.imagem_url = partial.imagem || null;
+    if (partial.selectedPlan !== undefined) updates.selected_plan = partial.selectedPlan || null;
     if (partial.briefing !== undefined) updates.briefing = partial.briefing;
     if (partial.siteGerado !== undefined) updates.site_gerado = partial.siteGerado;
     if (partial.siteHtml !== undefined) updates.site_html = partial.siteHtml;

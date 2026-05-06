@@ -1,4 +1,7 @@
 import { selectEventTemplate } from "@/lib/templates";
+import { getPlanGenerationStrategy, getSelectedPlanFromEvento } from "@/lib/planStrategy";
+import { buildPalette } from "./colorUtils";
+import type { DesignSpec } from "./types";
 import type {
   AgentEvento,
   BuilderOutput,
@@ -65,6 +68,7 @@ export function designerAgent(
   interpretation: InterpretationOutput
 ): DesignOutput {
   const template = selectEventTemplate(evento.tipo);
+  const strategy = getPlanGenerationStrategy(getSelectedPlanFromEvento(evento));
   const color = clean(evento.briefing?.corPrincipal);
 
   const fontByLayout: Record<string, string> = {
@@ -83,20 +87,88 @@ export function designerAgent(
     serene: ["espaco amplo", "tons naturais", "tipografia classica", "ritmo contemplativo"],
   };
 
+  const planDifferentiators: Record<typeof strategy.intensidade, string[]> = {
+    essencial: ["menos secoes", "composicao limpa", "hierarquia rapida", "menos ornamentos"],
+    completa: ["cards informativos", "ritmo equilibrado", "blocos de apoio", "cta mais visivel"],
+    premium: ["hero editorial", "composicao em camadas", "detalhes de acabamento", "narrativa visual forte"],
+  };
+
+  const planFonts: Record<typeof strategy.intensidade, string> = {
+    essencial: "Manrope",
+    completa: fontByLayout[template.layout] || "Inter",
+    premium: fontByLayout[template.layout] || "Inter",
+  };
+
+  const palette = buildPalette(color);
+  const display = planFonts[strategy.intensidade];
+
+  const motionByLayout: Record<string, string[]> = {
+    elegant: [
+      "Fade-up suave 0.7s cubic-bezier(0.16,1,0.3,1) on scroll (IntersectionObserver, threshold 0.15)",
+      "Hover em cards: translateY(-3px) + sombra mais forte 280ms",
+      "Imagem do hero: ken burns lento (transform scale 1 → 1.04) 18s loop",
+    ],
+    vibrant: [
+      "Fade-up + slight rotate 0.5s on scroll",
+      "Hover em cards: scale(1.02) + sombra colorida da paleta",
+      "Botão primary: brilho diagonal animado a cada hover",
+    ],
+    minimal: [
+      "Fade simples 0.4s on scroll, sem translate",
+      "Hover: borda muda pra primary, transição 200ms",
+      "Sem animações decorativas — pureza visual",
+    ],
+    celebration: [
+      "Fade-up enérgico 0.5s ease-out on scroll",
+      "Pulse no CTA principal (scale 1 ↔ 1.05) 2s infinite",
+      "Hero com gradiente animado (background-position 0% → 100%) 12s",
+    ],
+    serene: [
+      "Fade-up 0.9s ease-out, threshold 0.1",
+      "Sem hover scale — só mudança de cor sutil",
+      "Imagens com border-radius 24px e sombra delicada",
+    ],
+  };
+
+  const spec: DesignSpec = {
+    palette,
+    fontDisplay: `'${display}', serif`,
+    fontBody: "'Inter', system-ui, sans-serif",
+    scale: {
+      h1: "clamp(2.5rem, 6vw, 5rem)",
+      h2: "clamp(1.8rem, 4vw, 3rem)",
+      h3: "1.5rem",
+      body: "1.0625rem",
+    },
+    radius: { card: "20px", button: "999px" },
+    spacing: {
+      sectionY: "clamp(64px, 9vw, 120px)",
+      cardPad: "clamp(24px, 3vw, 40px)",
+      gap: "clamp(16px, 2vw, 32px)",
+    },
+    motionRules: motionByLayout[template.layout] || motionByLayout.celebration,
+  };
+
   return {
     template,
-    layoutIntent: `${template.layout} para ${interpretation.mood}`,
+    layoutIntent: `${template.layout} para ${interpretation.mood}, com entrega ${strategy.intensidade}`,
     typography: {
-      display: fontByLayout[template.layout] || "Inter",
+      display,
       body: "Inter",
     },
     visualRules: [
-      `Usar template ${template.name} como base visual.`,
-      color ? `Usar ${color} como cor principal quando harmonico.` : "Usar paleta padrao do template.",
-      "Manter contraste legivel em mobile e desktop.",
-      "Nao misturar estilos de templates diferentes.",
+      `Use ${template.name} como referência (vibe ${template.layout}).`,
+      `Cor primária: ${palette.primary}. NÃO use outra cor primária.`,
+      `Plano: ${strategy.nome} (${strategy.intensidade}).`,
+      "Contraste WCAG AA mínimo. Texto sobre primary precisa ser branco.",
+      "Mobile-first com media queries pra >=768px e >=1024px.",
+      ...strategy.design,
     ],
-    differentiators: compositionByLayout[template.layout] || compositionByLayout.celebration,
+    differentiators: [
+      ...(compositionByLayout[template.layout] || compositionByLayout.celebration),
+      ...planDifferentiators[strategy.intensidade],
+    ],
+    spec,
   };
 }
 
@@ -109,6 +181,7 @@ export function copywriterAgent(
   const cidade = evento.endereco?.cidade || "sua cidade";
   const data = formatDate(evento.data);
   const detail = interpretation.mustUseDetails[0];
+  const strategy = getPlanGenerationStrategy(getSelectedPlanFromEvento(evento));
 
   const byTemplate: Record<string, CopyOutput> = {
     casamento: {
@@ -173,7 +246,33 @@ export function copywriterAgent(
     },
   };
 
-  return byTemplate[design.template.id] || byTemplate.festa;
+  const base = byTemplate[design.template.id] || byTemplate.festa;
+
+  if (strategy.intensidade === "essencial") {
+    return {
+      ...base,
+      subtitle: base.subtitle,
+      description: base.description.slice(0, 180),
+      invitationMessage: base.invitationMessage,
+      highlights: base.highlights.slice(0, 3),
+    };
+  }
+
+  if (strategy.intensidade === "premium") {
+    return {
+      ...base,
+      subtitle: `${base.subtitle} Experiencia premium desenhada para causar impressao imediata.`,
+      description: `${base.description} A proposta visual e textual precisa parecer exclusiva, autoral e inteiramente alinhada ao briefing do cliente.`,
+      invitationMessage: `${base.invitationMessage} Cada detalhe do site deve reforcar presenca, expectativa e alto valor percebido.`,
+      highlights: [
+        base.highlights[0] || "Visual premium",
+        base.highlights[1] || "Narrativa autoral",
+        "Acabamento sofisticado",
+      ],
+    };
+  }
+
+  return base;
 }
 
 export function locationAgent(evento: AgentEvento): LocationOutput {
@@ -234,11 +333,30 @@ export function siteBuilderAgent(
   guests: GuestOutput
 ): BuilderOutput {
   const missingBlocks: string[] = [];
+  const strategy = getPlanGenerationStrategy(getSelectedPlanFromEvento(evento));
   if (!location.address) missingBlocks.push("local");
   if (!evento.data) missingBlocks.push("data");
 
-  return {
-    sections: [
+  const sectionsByPlan: Record<typeof strategy.intensidade, string[]> = {
+    essencial: [
+      "hero",
+      "sobre",
+      "local",
+      "rsvp",
+      "footer",
+    ],
+    completa: [
+      "hero",
+      "countdown",
+      "sobre",
+      "agenda",
+      "local",
+      "informacoes-praticas",
+      "rsvp",
+      "faq",
+      "footer",
+    ],
+    premium: [
       "hero",
       "countdown",
       "sobre",
@@ -252,6 +370,10 @@ export function siteBuilderAgent(
       "faq",
       "footer",
     ],
+  };
+
+  return {
+    sections: sectionsByPlan[strategy.intensidade],
     qrTarget: "cliente/[slug]",
     publishReady: missingBlocks.length === 0 && guests.duplicates.length === 0,
     missingBlocks,

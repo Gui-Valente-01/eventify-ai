@@ -10,6 +10,7 @@ import { gerarSiteAPI } from "@/lib/api";
 import { gerarSlug } from "@/lib/utils";
 import { getStatusLabel, isPublishedStatus } from "@/lib/publication";
 import { PLANS, type PlanId } from "@/lib/plans";
+import { getPlanDisplayName, getSelectedPlanFromEvento, normalizePlanId } from "@/lib/planStrategy";
 
 export default function EventoProntoPage() {
   const params = useParams();
@@ -109,6 +110,7 @@ export default function EventoProntoPage() {
   const suggestions = evento.siteGerado?.businessSuggestions ?? evento.siteGerado?.agentRun?.business.upsells ?? [];
   const eventSlug = gerarSlug(evento.nome);
   const published = isPublishedStatus(evento.status);
+  const selectedPlan = normalizePlanId(getSelectedPlanFromEvento(evento));
 
   return (
     <main className="eventify-page">
@@ -135,7 +137,7 @@ export default function EventoProntoPage() {
             </div>
           )}
 
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             <div className="eventify-card p-6">
               <p className="eventify-muted text-sm font-bold uppercase tracking-[0.2em]">Status</p>
               <p className="mt-3 text-3xl font-black text-[#090814]">{getStatusLabel(evento.status)}</p>
@@ -147,6 +149,10 @@ export default function EventoProntoPage() {
             <div className="eventify-card p-6">
               <p className="eventify-muted text-sm font-bold uppercase tracking-[0.2em]">Template</p>
               <p className="mt-3 text-3xl font-black text-[#090814]">{evento.siteGerado?.templateName || evento.tipo}</p>
+            </div>
+            <div className="eventify-card p-6">
+              <p className="eventify-muted text-sm font-bold uppercase tracking-[0.2em]">Plano</p>
+              <p className="mt-3 text-3xl font-black text-[#090814]">{getPlanDisplayName(selectedPlan)}</p>
             </div>
           </div>
 
@@ -194,7 +200,7 @@ export default function EventoProntoPage() {
                         onClick={() => publicarComPlano(plano.id)}
                         disabled={!!publicando}
                         className={`flex w-full items-start justify-between gap-3 rounded-2xl border-2 p-4 text-left transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 ${
-                          plano.destaque
+                          plano.id === selectedPlan
                             ? "border-purple-500 bg-purple-50"
                             : "border-[#e8e3f1] bg-white hover:border-purple-300"
                         }`}
@@ -202,9 +208,9 @@ export default function EventoProntoPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="text-base font-black text-[#090814]">{plano.nome}</p>
-                            {plano.destaque && (
+                            {plano.id === selectedPlan && (
                               <span className="rounded-full bg-purple-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                                Recomendado
+                                Escolhido
                               </span>
                             )}
                           </div>

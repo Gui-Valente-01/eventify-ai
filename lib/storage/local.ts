@@ -37,7 +37,11 @@ export const localBackend: StorageBackend = {
     return found ? ensureId(found) : null;
   },
   async create(evento) {
-    const withId = ensureId({ ...evento, status: evento.status ?? "preview" });
+    const withId = ensureId({
+      ...evento,
+      status: evento.status ?? "preview",
+      selectedPlan: evento.selectedPlan ?? evento.briefing?.planoSelecionado,
+    });
     const list = read();
     list.push(withId);
     write(list);

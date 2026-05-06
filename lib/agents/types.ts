@@ -24,6 +24,7 @@ export type AgentEvento = {
     estado?: string;
   };
   imagem?: string;
+  selectedPlan?: string;
   briefing?: {
     estilo?: string;
     clima?: string;
@@ -31,6 +32,7 @@ export type AgentEvento = {
     corPrincipal?: string;
     descricao?: string;
     detalhes?: Record<string, string>;
+    planoSelecionado?: string;
   };
   convidados?: string[];
 };
@@ -44,6 +46,27 @@ export type InterpretationOutput = {
   risks: string[];
 };
 
+export type DesignPalette = {
+  primary: string;
+  primaryDark: string;
+  primarySoft: string;
+  accent: string;
+  surface: string;
+  surfaceAlt: string;
+  ink: string;
+  inkMuted: string;
+};
+
+export type DesignSpec = {
+  palette: DesignPalette;
+  fontDisplay: string;     // Família de fonte do display (com fallback)
+  fontBody: string;
+  scale: { h1: string; h2: string; h3: string; body: string };
+  radius: { card: string; button: string };
+  spacing: { sectionY: string; cardPad: string; gap: string };
+  motionRules: string[];   // Diretivas concretas de animação
+};
+
 export type DesignOutput = {
   template: EventTemplate;
   layoutIntent: string;
@@ -53,6 +76,7 @@ export type DesignOutput = {
   };
   visualRules: string[];
   differentiators: string[];
+  spec: DesignSpec;
 };
 
 export type CopyOutput = {

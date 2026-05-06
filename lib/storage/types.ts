@@ -15,6 +15,7 @@ export type Briefing = {
   corPrincipal?: string;
   descricao?: string;
   detalhes?: Record<string, string>;
+  planoSelecionado?: string;
 };
 
 export type EventStatus = "draft" | "preview" | "paid" | "published" | "archived";
@@ -27,6 +28,7 @@ export type EventoDados = {
   status?: EventStatus;
   endereco?: Endereco;
   imagem?: string;
+  selectedPlan?: string;
   briefing?: Briefing;
   convidados?: string[];
   siteGerado?: GeneratedSite;

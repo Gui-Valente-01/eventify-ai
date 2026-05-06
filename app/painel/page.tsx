@@ -9,6 +9,7 @@ import { gerarSiteAPI } from "@/lib/api";
 import { getStatusLabel, isPublishedStatus } from "@/lib/publication";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
+import { getPlanDisplayName, getSelectedPlanFromEvento, normalizePlanId } from "@/lib/planStrategy";
 
 function PainelInner() {
   const searchParams = useSearchParams();
@@ -110,7 +111,7 @@ function PainelInner() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: "intermediario", eventId: evento.id }),
+        body: JSON.stringify({ planId: normalizePlanId(getSelectedPlanFromEvento(evento)), eventId: evento.id }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -226,6 +227,7 @@ function PainelInner() {
                       <p>📍 {[evento.endereco.rua, evento.endereco.numero, evento.endereco.cidade].filter(Boolean).join(", ")}</p>
                     )}
                     <p>👥 {evento.convidados?.length || 0} convidados</p>
+                    <p>💳 Plano desejado: {getPlanDisplayName(getSelectedPlanFromEvento(evento))}</p>
                     <p>
                       🤖{" "}
                       {evento.siteGerado

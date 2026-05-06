@@ -9,6 +9,7 @@ import {
   siteBuilderAgent,
 } from "./productAgents";
 import { businessAgent } from "./businessAgents";
+import { buildPlanPrompt, getPlanGenerationStrategy, getSelectedPlanFromEvento } from "@/lib/planStrategy";
 import type {
   AgentCompanyResult,
   AgentEvento,
@@ -82,31 +83,76 @@ function buildPromptContext(args: {
   image: ImageOutput;
   business: BusinessOutput;
 }) {
-  return JSON.stringify(
-    {
-      event: {
-        nome: args.evento.nome,
-        tipo: args.evento.tipo,
-        data: args.evento.data,
-        endereco: args.location.address,
-        briefing: args.evento.briefing || {},
-      },
-      creativeDirection: args.interpretation,
-      designSystem: {
-        templateId: args.design.template.id,
-        templateName: args.design.template.name,
-        layout: args.design.template.layout,
-        palette: args.design.template.palette,
-        typography: args.design.typography,
-        visualRules: args.design.visualRules,
-        differentiators: args.design.differentiators,
-      },
-      imageStrategy: args.image,
-      business: args.business,
-    },
-    null,
-    2
-  );
+  const selectedPlan = getSelectedPlanFromEvento(args.evento);
+  const strategy = getPlanGenerationStrategy(selectedPlan);
+  const { spec } = args.design;
+  const p = spec.palette;
+
+  // Sistema de design CONCRETO — Gemini deve copiar literalmente.
+  const designSystemBlock = `
+🎨 SISTEMA DE DESIGN OBRIGATÓRIO (use EXATAMENTE esses valores como CSS variables no <style> do <head>):
+
+:root {
+  --color-primary: ${p.primary};
+  --color-primary-dark: ${p.primaryDark};
+  --color-primary-soft: ${p.primarySoft};
+  --color-accent: ${p.accent};
+  --color-surface: ${p.surface};
+  --color-surface-alt: ${p.surfaceAlt};
+  --color-ink: ${p.ink};
+  --color-ink-muted: ${p.inkMuted};
+  --font-display: ${spec.fontDisplay};
+  --font-body: ${spec.fontBody};
+  --radius-card: ${spec.radius.card};
+  --radius-button: ${spec.radius.button};
+  --section-y: ${spec.spacing.sectionY};
+  --card-pad: ${spec.spacing.cardPad};
+  --gap: ${spec.spacing.gap};
+}
+
+REGRAS DE APLICAÇÃO (não negociáveis):
+- Headings (h1-h3) usam var(--font-display), peso 700, letter-spacing -0.02em.
+  - h1: ${spec.scale.h1}
+  - h2: ${spec.scale.h2}
+  - h3: ${spec.scale.h3}
+- Body usa var(--font-body), peso 400, line-height 1.65, font-size ${spec.scale.body}.
+- Botões: border-radius var(--radius-button), padding 0.9rem 1.8rem, transition 200ms ease.
+  - Primary: background var(--color-primary), color #fff, hover translateY(-2px) + shadow.
+  - Ghost: background transparent, border 1.5px solid var(--color-ink), color var(--color-ink).
+- Cards: border-radius var(--radius-card), padding var(--card-pad), background var(--color-surface), border 1px solid color-mix(in srgb, var(--color-ink) 8%, transparent).
+- Sections: padding var(--section-y) 24px. Alternar background entre var(--color-surface) e var(--color-surface-alt).
+- Imagens: border-radius var(--radius-card), object-fit cover.
+- Foco visível em todos inputs/botões: outline 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent).
+
+ANIMAÇÕES (aplicar exatamente):
+${spec.motionRules.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
+
+DIRETIVAS CRIATIVAS:
+- Vibe geral: ${args.design.template.layout} (${args.design.layoutIntent})
+- Diferenciais: ${args.design.differentiators.join(" · ")}
+- Tom de voz: ${args.interpretation.mood}
+- Público alvo: ${args.interpretation.audience}
+
+REGRAS RÍGIDAS:
+${args.design.visualRules.map((r) => `- ${r}`).join("\n")}
+
+CONTEXTO ADICIONAL (JSON — use pra copy):
+${JSON.stringify({
+  event: {
+    nome: args.evento.nome,
+    tipo: args.evento.tipo,
+    data: args.evento.data,
+    endereco: args.location.address,
+    briefing: args.evento.briefing || {},
+  },
+  selectedPlan,
+  selectedPlanStrategy: strategy,
+  imageStrategy: args.image,
+  business: args.business,
+}, null, 2)}
+`.trim();
+
+  return designSystemBlock;
 }
 
 export function runAgentCompany(evento: AgentEvento): AgentCompanyResult {
@@ -153,6 +199,7 @@ export function runAgentCompany(evento: AgentEvento): AgentCompanyResult {
       typography: design.typography,
       visualRules: design.visualRules,
       differentiators: design.differentiators,
+      spec: design.spec,
     },
     location,
     guests,
@@ -176,6 +223,6 @@ export function runAgentCompany(evento: AgentEvento): AgentCompanyResult {
       agentRun,
     },
     agentRun,
-    promptContext: buildPromptContext({ evento, interpretation, design, location, image, business }),
+    promptContext: `${buildPlanPrompt(getSelectedPlanFromEvento(evento))}\n\nCONTEXTO DOS AGENTES:\n${buildPromptContext({ evento, interpretation, design, location, image, business })}`,
   };
 }

@@ -15,6 +15,7 @@ export type EventoDados = {
     estado?: string;
   };
   imagem?: string;
+  selectedPlan?: string;
   briefing?: {
     estilo?: string;
     clima?: string;
@@ -22,6 +23,7 @@ export type EventoDados = {
     corPrincipal?: string;
     descricao?: string;
     detalhes?: Record<string, string>;
+    planoSelecionado?: string;
   };
   convidados?: string[];
   siteGerado?: GeneratedSite;
@@ -41,7 +43,7 @@ export type GeneratedSite = {
   ctaLabel: string;
   seoTitle: string;
   seoDescription: string;
-  generatedBy: "local-agent" | "claude" | "openai";
+  generatedBy: "local-agent" | "claude" | "gemini" | "openai";
   qualityScore?: number;
   qualityWarnings?: string[];
   businessSuggestions?: string[];

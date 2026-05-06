@@ -8,11 +8,17 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { calcularCustoUSD, type TokenUsage } from "@/lib/aiPricing";
 import { checkPodeCriarEvento, checkPodeRegenerar } from "@/lib/planLimits";
 import { logger } from "@/lib/logger";
-import { generateHtmlWithGemini, isGeminiAvailable, getGeminiModel } from "@/lib/gemini";
+import { generateHtmlWithGemini, isGeminiAvailable } from "@/lib/gemini";
+import {
+  buildPlanPrompt,
+  getPlanDisplayName,
+  getPlanGenerationStrategy,
+  getSelectedPlanFromEvento,
+} from "@/lib/planStrategy";
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
-const DEFAULT_MAX_HTML_TOKENS = 16000;
+const DEFAULT_MAX_HTML_TOKENS = 24000;
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -172,22 +178,21 @@ Construir um SITE COMPLETO (não uma landing page enxuta), com várias seções 
 11. **FAQ** — 4 a 6 perguntas relevantes ao tipo de evento, com respostas escritas pela IA baseadas no contexto.
 12. **Footer** — hashtag/instagram se houver, contato, créditos.
 
-🎨 DESIGN:
-- Identidade visual coerente com o estilo + clima + cor principal informados.
-- Tipografia: Inter via Google Fonts + UMA fonte display escolhida pelo estilo (Playfair Display para clássico/romântico, Bebas Neue para festa, Space Grotesk para corporativo, etc).
-- Use a cor principal de forma consistente (botões, destaques, gradientes), com paleta auxiliar harmônica.
-- Mobile-first, 100% responsivo.
-- Animações sutis: fade-in on scroll (IntersectionObserver), hover suaves, contagem animada.
-- Espaçamento generoso entre seções (padding y mínimo 80px desktop, 48px mobile).
+🎨 DESIGN — SISTEMA RÍGIDO:
+- O bloco "SISTEMA DE DESIGN OBRIGATÓRIO" no contexto contém CSS variables prontas. **COPIE LITERALMENTE no :root do <style>**. NÃO invente cores, fontes ou espaçamentos.
+- Use SEMPRE \`var(--color-primary)\`, \`var(--color-ink)\`, etc. NUNCA hexadecimal direto no CSS dos elementos.
+- Tipografia: Google Fonts pra carregar as fontes nomeadas em --font-display e --font-body.
+- Aplique TODAS as regras de animação listadas em "ANIMAÇÕES" (não pula nenhuma).
+- Mobile-first, 100% responsivo (use media queries pra >=768px e >=1024px).
 
 💻 FORMATO DE SAÍDA — OBRIGATÓRIO:
-- UM ÚNICO documento HTML autocontido.
+- UM ÚNICO documento HTML 100% AUTOCONTIDO. SEM dependências externas além de Google Fonts.
 - Começa LITERALMENTE com \`<!DOCTYPE html>\`. Sem texto antes.
-- \`<html lang="pt-BR">\`, \`<head>\` com charset, viewport, title e meta description (use o briefing pra escrever).
-- Tailwind via CDN: \`<script src="https://cdn.tailwindcss.com"></script>\`.
-- Google Fonts no \`<head>\`.
-- CSS extra em \`<style>\` no head.
-- JS no final do \`<body>\` (countdown, RSVP alert, IntersectionObserver, smooth scroll).
+- \`<html lang="pt-BR">\`, \`<head>\` com charset, viewport, title e meta description.
+- **TODO O CSS DEVE ESTAR INLINE em \`<style>\` no \`<head>\`. NÃO use Tailwind, NÃO use Bootstrap, NÃO use NENHUM framework CSS. Escreva CSS puro do zero.**
+- Use CSS Grid e Flexbox modernos. Custom properties (variáveis CSS) pra paleta.
+- Google Fonts pode usar (\`<link href="https://fonts.googleapis.com/...">\`).
+- Todo JS inline no final do \`<body>\` em \`<script>\` (countdown, RSVP alert, IntersectionObserver, smooth scroll).
 - Termina com \`</html>\`. SEM cercas markdown, SEM explicação, SEM comentário fora do HTML.
 
 🚫 PROIBIDO:
@@ -195,9 +200,23 @@ Construir um SITE COMPLETO (não uma landing page enxuta), com várias seções 
 - Cercas \`\`\`html
 - Comentários do tipo "aqui está o site"
 - Seções com placeholder vazio ("Em breve", "Lorem ipsum")
-- Imagens externas com URL inventada — use placeholders Tailwind (gradientes, formas SVG) ou a imagem do evento se fornecida
+- Imagens externas com URL inventada — use placeholders SVG inline ou gradientes CSS
+- **\`<script src="https://cdn.tailwindcss.com">\` ou QUALQUER framework CSS via CDN**
+- \`class="bg-blue-500"\` e classes do tipo Tailwind — NÃO funcionam, escreva CSS de verdade
 
 ENTREGUE O HTML DIRETO. SEM PREÂMBULO.`;
+
+const GEMINI_HARDENING_PROMPT = `
+
+CAMADA EXTRA PARA GEMINI:
+- Antes de responder, faca uma auditoria mental do HTML: estrutura, CSS, responsividade, JS, secoes obrigatorias e ausencia de placeholders.
+- Nao economize codigo. Sites curtos, simples ou parecidos com template devem ser refeitos antes da resposta final.
+- O HTML precisa parecer uma pagina publicada, nao um mockup. Todos os botoes, formularios, contagem, mapa e estados visuais devem ter comportamento basico funcional.
+- Nao use classes Tailwind nem nomes utilitarios se elas nao estiverem definidas no CSS. Prefira classes semanticas e CSS escrito no <style>.
+- Use layout mobile-first com breakpoints reais e evite qualquer texto estourando cards, botoes ou hero.
+- Se algum dado estiver ausente, escreva uma solucao editorial coerente sem usar "em breve", "a confirmar" ou placeholder.
+- Entregue uma versao final revisada, polida e completa em uma unica resposta HTML.
+`;
 
 function formatarData(data?: string) {
   if (!data) return "Data a confirmar";
@@ -216,6 +235,9 @@ function buildUserPrompt(evento: EventoDados, agentContext?: string): string {
   const e = evento.endereco || {};
   const b = evento.briefing || {};
   const detalhes = b.detalhes || {};
+  const selectedPlan = getSelectedPlanFromEvento(evento);
+  const selectedPlanName = getPlanDisplayName(selectedPlan);
+  const selectedPlanStrategy = getPlanGenerationStrategy(selectedPlan);
 
   const enderecoCompleto = [e.rua, e.numero, e.cidade, e.estado, e.cep]
     .filter(Boolean)
@@ -231,6 +253,7 @@ function buildUserPrompt(evento: EventoDados, agentContext?: string): string {
 Nome: ${evento.nome}
 Tipo: ${evento.tipo}
 Data: ${formatarData(evento.data)}
+Plano escolhido pelo cliente: ${selectedPlanName}
 
 📍 LOCAL:
 Endereço completo: ${enderecoCompleto || "(não informado)"}
@@ -242,6 +265,11 @@ Para o iframe Google Maps, use a URL: https://www.google.com/maps?q=${encodeURIC
 - Público: ${b.publico || "(livre)"}
 - Cor principal: ${b.corPrincipal || "(livre)"}
 - Descrição do cliente: ${b.descricao ? `"${b.descricao}"` : "(não informada)"}
+
+DIRETRIZ DO PLANO:
+${buildPlanPrompt(selectedPlan)}
+
+O site precisa refletir o plano ${selectedPlanName}. Não entregue estrutura de ${selectedPlanStrategy.nome} se o cliente escolheu outro plano.
 
 📋 DETALHES ESPECÍFICOS DO TIPO (use TODOS — cada um vira seção/conteúdo):
 ${detalhesTexto || "(o cliente não preencheu detalhes — invente algo coerente baseado no briefing geral, mas marque essas seções com texto curto)"}
@@ -346,6 +374,7 @@ async function generateCopyJSON(
             tipo: evento.tipo,
             data: evento.data,
             cidade: evento.endereco?.cidade,
+            selectedPlan: getSelectedPlanFromEvento(evento),
             briefing: evento.briefing,
           })}`,
         },
@@ -373,12 +402,11 @@ async function generateWithGemini(
   evento: EventoDados,
   localRun: AgentCompanyResult
 ): Promise<GenerationResult> {
-  const model = getGeminiModel();
   const template = selectEventTemplate(evento.tipo);
   const fallback = localRun.siteGerado as GeneratedSite;
 
   const result = await generateHtmlWithGemini({
-    systemPrompt: SYSTEM_PROMPT,
+    systemPrompt: `${SYSTEM_PROMPT}${GEMINI_HARDENING_PROMPT}`,
     userPrompt: buildUserPrompt(evento, localRun.promptContext),
     maxTokens: getMaxHtmlTokens(),
   });
@@ -391,7 +419,7 @@ async function generateWithGemini(
         templateName: template.name,
         layout: template.layout,
         palette: template.palette,
-        generatedBy: "claude",
+        generatedBy: "gemini",
         qualityScore: localRun.agentRun.quality.score,
         qualityWarnings: localRun.agentRun.quality.warnings,
         businessSuggestions: localRun.agentRun.business.upsells,

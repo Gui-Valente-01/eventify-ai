@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
+import PlanSelector from "@/components/PlanSelector";
 import { useEventos, EventoDados } from "@/hooks/useEventos";
 import { buscarCEP, dataMinimaHoje, mascararCEP } from "@/lib/utils";
 import { gerarSiteAPI } from "@/lib/api";
+import { DEFAULT_SELECTED_PLAN, normalizePlanId } from "@/lib/planStrategy";
+import type { PlanId } from "@/lib/plans";
 
 const TIPOS_EVENTO = ["Casamento", "Aniversário", "Evento Corporativo", "Festa", "Religioso"] as const;
 const TAMANHO_MAXIMO_IMAGEM = 4 * 1024 * 1024;
@@ -33,6 +36,7 @@ export default function EditarEvento() {
   const [imagemAtual, setImagemAtual] = useState("");
   const [imagemFile, setImagemFile] = useState<File | null>(null);
   const [imagemPreview, setImagemPreview] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_SELECTED_PLAN);
   const [estilo, setEstilo] = useState("");
   const [clima, setClima] = useState("");
   const [publico, setPublico] = useState("");
@@ -56,6 +60,7 @@ export default function EditarEvento() {
     setData(evento.data);
     setTipo(evento.tipo);
     setImagemAtual(evento.imagem || "");
+    setSelectedPlan(normalizePlanId(evento.selectedPlan || evento.briefing?.planoSelecionado));
 
     if (evento.endereco) {
       setCep(evento.endereco.cep || "");
@@ -127,6 +132,7 @@ export default function EditarEvento() {
         publico: publico.trim(),
         corPrincipal,
         descricao: descricao.trim(),
+        planoSelecionado: selectedPlan,
       };
 
       const eventoAtualizado: Partial<EventoDados> = {
@@ -134,6 +140,7 @@ export default function EditarEvento() {
         data,
         tipo,
         imagem: imagemFinal,
+        selectedPlan,
         endereco: { cep, rua, numero, cidade, estado },
         briefing,
       };
@@ -143,6 +150,7 @@ export default function EditarEvento() {
         data,
         tipo,
         imagem: imagemFinal,
+        selectedPlan,
         endereco: { cep, rua, numero, cidade, estado },
         briefing,
       };
@@ -238,6 +246,14 @@ export default function EditarEvento() {
               <input type="file" accept="image/jpeg,image/png,image/webp" className="mt-4 w-full text-sm text-[#5f5a72]" onChange={selecionarImagem} />
             </div>
           </div>
+
+          <PlanSelector
+            value={normalizePlanId(selectedPlan)}
+            onChange={setSelectedPlan}
+            disabled={salvando}
+            title="Plano desejado pelo cliente"
+            description="A IA regenera o site com base no plano escolhido. O resultado muda em densidade, visual e recursos."
+          />
 
           {previewExibido && (
             <div className="overflow-hidden rounded-2xl border border-[#e8e3f1] bg-[#f1eef8] shadow-lg">

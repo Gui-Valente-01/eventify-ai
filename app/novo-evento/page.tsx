@@ -5,10 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
+import GeneratingOverlay from "@/components/GeneratingOverlay";
+import PlanSelector from "@/components/PlanSelector";
 import { useEventos, EventoDados } from "@/hooks/useEventos";
 import { buscarCEP, dataMinimaHoje, gerarSlug, mascararCEP } from "@/lib/utils";
 import { gerarSiteAPI } from "@/lib/api";
 import { TIPOS_EVENTO, getBriefingSchema } from "@/lib/eventBriefings";
+import { DEFAULT_SELECTED_PLAN, normalizePlanId } from "@/lib/planStrategy";
+import type { PlanId } from "@/lib/plans";
 
 const TAMANHO_MAXIMO_IMAGEM = 4 * 1024 * 1024;
 const STEPS = ["Sobre", "Local", "Estilo", "Detalhes"] as const;
@@ -27,6 +31,7 @@ export default function NovoEvento() {
   const [data, setData] = useState("");
   const [imagemFile, setImagemFile] = useState<File | null>(null);
   const [imagemPreview, setImagemPreview] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_SELECTED_PLAN);
 
   // Etapa 2
   const [cep, setCep] = useState("");
@@ -149,6 +154,7 @@ export default function NovoEvento() {
         tipo,
         status: "preview",
         imagem: imagemUrl,
+        selectedPlan,
         endereco: { cep, rua, numero, cidade, estado },
         briefing: {
           estilo: estilo.trim(),
@@ -157,17 +163,39 @@ export default function NovoEvento() {
           corPrincipal,
           descricao: descricao.trim(),
           detalhes,
+          planoSelecionado: selectedPlan,
         },
         convidados: [],
       };
 
       const resultado = await gerarSiteAPI(novoEvento);
+
+      // Se a API retornou erro explícito (rate-limit, plano, etc), mostra
+      if (resultado.erro && !resultado.siteGerado) {
+        console.error("[novo-evento] erro da API:", resultado);
+        setAviso({ tipo: "erro", texto: resultado.erro });
+        setSalvando(false);
+        return;
+      }
+
       if (resultado.siteGerado) novoEvento.siteGerado = resultado.siteGerado;
       if (resultado.siteHtml) novoEvento.siteHtml = resultado.siteHtml;
 
-      const salvo = await adicionarEvento(novoEvento);
+      let salvo;
+      try {
+        salvo = await adicionarEvento(novoEvento);
+      } catch (saveErr) {
+        const e = saveErr as { message?: string; code?: string; details?: string; hint?: string };
+        console.error("[novo-evento] erro ao salvar evento:", { e, raw: saveErr });
+        const msgFinal = e?.message
+          ? `Erro ao salvar: ${e.message}${e.hint ? ` (${e.hint})` : ""}`
+          : "Erro ao salvar o evento no banco.";
+        setAviso({ tipo: "erro", texto: msgFinal });
+        setSalvando(false);
+        return;
+      }
 
-      if (!resultado.aiAvailable && !resultado.erro) {
+      if (!resultado.aiAvailable) {
         setAviso({
           tipo: "aviso",
           texto:
@@ -179,7 +207,9 @@ export default function NovoEvento() {
 
       router.push(`/evento/${gerarSlug(salvo.nome)}/pronto`);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Erro ao criar evento.";
+      console.error("[novo-evento] erro inesperado:", error);
+      const e = error as { message?: string; code?: string };
+      const msg = e?.message || "Erro inesperado ao criar evento. Veja o console.";
       setAviso({ tipo: "erro", texto: msg });
       setSalvando(false);
     }
@@ -188,6 +218,7 @@ export default function NovoEvento() {
   return (
     <main className="eventify-page">
       <BrandHeader />
+      <GeneratingOverlay visible={salvando} />
       <div className="eventify-section max-w-5xl">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -215,6 +246,8 @@ export default function NovoEvento() {
               setData={setData}
               imagemPreview={imagemPreview}
               selecionarImagem={selecionarImagem}
+              selectedPlan={selectedPlan}
+              setSelectedPlan={setSelectedPlan}
             />
           )}
 
@@ -361,6 +394,8 @@ function StepSobre(props: {
   setData: (v: string) => void;
   imagemPreview: string;
   selecionarImagem: (e: ChangeEvent<HTMLInputElement>) => void;
+  selectedPlan: PlanId;
+  setSelectedPlan: (value: PlanId) => void;
 }) {
   return (
     <div className="grid gap-6">
@@ -399,6 +434,13 @@ function StepSobre(props: {
           </option>
         ))}
       </select>
+
+      <PlanSelector
+        value={normalizePlanId(props.selectedPlan)}
+        onChange={props.setSelectedPlan}
+        title="Plano que o cliente quer"
+        description="Esse plano define como a IA monta o site: nivel visual, profundidade do texto e quantidade de secoes."
+      />
 
       <div className="rounded-2xl border border-[#e8e3f1] bg-[#faf9ff] p-4">
         <p className="text-sm font-black text-[#090814]">Imagem do evento (opcional)</p>
