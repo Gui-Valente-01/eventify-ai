@@ -18,7 +18,7 @@ import {
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
-const DEFAULT_MAX_HTML_TOKENS = 12000;
+const DEFAULT_MAX_HTML_TOKENS = 8000;
 
 export const runtime = "nodejs";
 // Vercel Hobby corta em 60s; Pro permite até 300s. Mantemos 60 pra
