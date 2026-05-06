@@ -290,6 +290,16 @@ function PainelInner() {
                     <Link href={`/editar-evento/${gerarSlug(evento.nome)}`} className="rounded-xl border border-[#e8e3f1] bg-white px-4 py-2 text-sm font-bold text-[#090814] transition hover:bg-[#faf9ff]">
                       Editar
                     </Link>
+                    {evento.id && (evento.convidados?.length ?? 0) > 0 && (
+                      <a
+                        href={`/api/eventos/${evento.id}/convidados.csv`}
+                        download
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-[#e8e3f1] bg-white px-4 py-2 text-sm font-bold text-[#090814] transition hover:bg-[#faf9ff]"
+                        title={`Exportar ${evento.convidados?.length ?? 0} convidados em CSV`}
+                      >
+                        ⬇ CSV
+                      </a>
+                    )}
                     <button
                       onClick={() => regenerarSite(index)}
                       disabled={regenerandoIndex !== null}
