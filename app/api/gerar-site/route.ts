@@ -7,6 +7,10 @@ import { selectEventTemplate } from "@/lib/templates";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { calcularCustoUSD, type TokenUsage } from "@/lib/aiPricing";
 import { checkPodeCriarEvento, checkPodeRegenerar } from "@/lib/planLimits";
+import { logger } from "@/lib/logger";
+
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_MAX_CALLS = 5;
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -126,7 +130,7 @@ async function logUsage(args: {
       throw error;
     }
   } catch (e) {
-    console.error("[gerar-site] falha ao gravar usage_logs:", e);
+    logger.error("gerar-site", "falha ao gravar usage_logs", e, { userId: args.userId });
   }
 }
 
@@ -308,7 +312,7 @@ async function generateCustomHTML(
         : error instanceof Error
           ? error.message
           : "erro desconhecido";
-    console.error("[gerar-site] HTML —", msg);
+    logger.error("gerar-site", "Anthropic falhou ao gerar HTML", error, { detail: msg });
     return { html: null, usage: emptyUsage(), error: msg };
   }
 }
@@ -416,10 +420,28 @@ export async function POST(req: Request) {
 
   const { model, plan, userId } = await resolveContext();
 
-  // ----- Validação de limites por plano (server-side) -----
+  // ----- Validação de limites por plano + rate-limit (server-side) -----
   if (userId) {
     const supabase = await getSupabaseServerClient();
     if (supabase) {
+      // Rate-limit: máx N chamadas/usuário em janela curta
+      const desdeISO = new Date(Date.now() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
+      const { count: recentCount } = await supabase
+        .from("usage_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", desdeISO);
+      if ((recentCount ?? 0) >= RATE_LIMIT_MAX_CALLS) {
+        logger.warn("gerar-site", "rate-limit atingido", { userId, recentCount });
+        return NextResponse.json(
+          {
+            error: `Muitas chamadas em pouco tempo. Tente novamente em ${RATE_LIMIT_WINDOW_SECONDS}s.`,
+            code: "rate_limit",
+          },
+          { status: 429 }
+        );
+      }
+
       // Se NÃO tem evento.id, é criação nova → checa max_eventos
       if (!evento.id) {
         const { count: eventosCount } = await supabase

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PLANS, PlanId } from "@/lib/plans";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 const STRIPE_PRICE_IDS: Record<PlanId, string | undefined> = {
   basico: process.env.STRIPE_PRICE_BASICO,
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
 
     const stripeData = await stripeRes.json();
     if (!stripeRes.ok) {
-      console.error("[checkout] Stripe error:", stripeData);
+      logger.error("checkout", "Stripe rejeitou criação da sessão", null, { stripeError: stripeData });
       return NextResponse.json(
         { error: stripeData.error?.message || "Erro do Stripe." },
         { status: 502 }
@@ -99,7 +100,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: stripeData.url, configurado: true });
   } catch (error) {
-    console.error("[checkout] Erro:", error);
+    logger.error("checkout", "erro inesperado no checkout", error);
     return NextResponse.json({ error: "Erro inesperado no checkout." }, { status: 500 });
   }
 }

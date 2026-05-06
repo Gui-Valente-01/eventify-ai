@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
+
+const WEBHOOK_TOLERANCE_SECONDS = 300;
 
 export async function POST(req: Request) {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -45,20 +48,38 @@ export async function POST(req: Request) {
 
     if (supabaseUrl && serviceRoleKey) {
       const admin = createClient(supabaseUrl, serviceRoleKey);
-      if (userId && plan) {
-        await admin.from("profiles").update({ plan }).eq("id", userId);
+      try {
+        if (userId && plan) {
+          const { error } = await admin.from("profiles").update({ plan }).eq("id", userId);
+          if (error) throw error;
+        }
+        if (eventId) {
+          const { error } = await admin
+            .from("eventos")
+            .update({
+              status: "published",
+              paid_at: new Date().toISOString(),
+              published_at: new Date().toISOString(),
+              paid_plan: plan || null,
+            })
+            .eq("id", eventId);
+          if (error) throw error;
+        }
+        logger.info("stripe-webhook", "checkout.session.completed processado", {
+          userId,
+          eventId,
+          plan,
+        });
+      } catch (err) {
+        logger.error("stripe-webhook", "falha ao atualizar Supabase após pagamento", err, {
+          userId,
+          eventId,
+          plan,
+        });
+        return NextResponse.json({ error: "Falha ao processar." }, { status: 500 });
       }
-      if (eventId) {
-        await admin
-          .from("eventos")
-          .update({
-            status: "published",
-            paid_at: new Date().toISOString(),
-            published_at: new Date().toISOString(),
-            paid_plan: plan || null,
-          })
-          .eq("id", eventId);
-      }
+    } else {
+      logger.warn("stripe-webhook", "Supabase não configurado — pagamento ignorado", { eventId });
     }
   }
 
@@ -76,6 +97,18 @@ async function verifyStripeSignature(payload: string, signature: string, secret:
     const v1 = elements.v1;
     if (!timestamp || !v1) return false;
 
+    // Anti-replay: rejeita se timestamp > 5 min
+    const tsSeconds = parseInt(timestamp, 10);
+    if (!Number.isFinite(tsSeconds)) return false;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (Math.abs(nowSeconds - tsSeconds) > WEBHOOK_TOLERANCE_SECONDS) {
+      logger.warn("stripe-webhook", "timestamp fora da tolerância (replay rejeitado)", {
+        ageSeconds: nowSeconds - tsSeconds,
+        tolerance: WEBHOOK_TOLERANCE_SECONDS,
+      });
+      return false;
+    }
+
     const signedPayload = `${timestamp}.${payload}`;
     const enc = new TextEncoder();
     const key = await crypto.subtle.importKey(
@@ -91,7 +124,8 @@ async function verifyStripeSignature(payload: string, signature: string, secret:
       .join("");
 
     return timingSafeEqual(expected, v1);
-  } catch {
+  } catch (err) {
+    logger.error("stripe-webhook", "erro ao validar assinatura", err);
     return false;
   }
 }
