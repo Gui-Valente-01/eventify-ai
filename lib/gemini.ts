@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import type { TokenUsage } from "@/lib/aiPricing";
 import { logger } from "@/lib/logger";
 
-const DEFAULT_MODEL = "gemini-2.0-flash-exp";
+const DEFAULT_MODEL = "gemini-2.0-flash";
 
 export type GeminiResult = {
   html: string | null;
