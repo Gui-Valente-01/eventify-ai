@@ -116,7 +116,7 @@ function PainelInner() {
       if (!res.ok) {
         setAviso({ tipo: "erro", texto: data.error || "Não foi possível iniciar o checkout." });
       } else if (data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
         return;
       } else {
         setAviso({

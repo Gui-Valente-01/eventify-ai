@@ -88,6 +88,12 @@ create policy "convidados_owner_select" on public.convidados
     exists (select 1 from public.eventos e where e.id = evento_id and e.owner_id = auth.uid())
   );
 
+drop policy if exists "convidados_owner_insert" on public.convidados;
+create policy "convidados_owner_insert" on public.convidados
+  for insert with check (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.owner_id = auth.uid())
+  );
+
 drop policy if exists "convidados_owner_delete" on public.convidados;
 create policy "convidados_owner_delete" on public.convidados
   for delete using (
@@ -96,11 +102,15 @@ create policy "convidados_owner_delete" on public.convidados
 
 drop policy if exists "convidados_public_insert" on public.convidados;
 create policy "convidados_public_insert" on public.convidados
-  for insert with check (true);
+  for insert with check (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.status in ('paid', 'published'))
+  );
 
 drop policy if exists "convidados_public_read" on public.convidados;
 create policy "convidados_public_read" on public.convidados
-  for select using (true);
+  for select using (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.status in ('paid', 'published'))
+  );
 
 -- =============================================================
 -- Trigger: auto-criar profile ao registrar

@@ -11,6 +11,7 @@ import { logger } from "@/lib/logger";
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
+const DEFAULT_MAX_HTML_TOKENS = 16000;
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -43,6 +44,12 @@ function extractUsage(usage: unknown): Usage {
     cacheReadTokens: u?.cache_read_input_tokens ?? 0,
     cacheWriteTokens: u?.cache_creation_input_tokens ?? 0,
   };
+}
+
+function getMaxHtmlTokens() {
+  const raw = Number(process.env.ANTHROPIC_MAX_HTML_TOKENS || DEFAULT_MAX_HTML_TOKENS);
+  if (!Number.isFinite(raw)) return DEFAULT_MAX_HTML_TOKENS;
+  return Math.min(Math.max(Math.floor(raw), 4000), 32000);
 }
 
 type Plan = "free" | "basico" | "intermediario" | "premium";
@@ -280,7 +287,7 @@ async function generateCustomHTML(
   try {
     const response = await client.messages.create({
       model: modelId,
-      max_tokens: 32000,
+      max_tokens: getMaxHtmlTokens(),
       system: [
         {
           type: "text",
@@ -479,7 +486,7 @@ export async function POST(req: Request) {
   const agentRun = siteGerado.agentRun || localRun.agentRun;
 
   if (process.env.ANTHROPIC_API_KEY) {
-    void logUsage({
+    await logUsage({
       userId,
       eventoId: evento.id ?? null,
       model,

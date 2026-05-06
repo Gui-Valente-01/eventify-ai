@@ -4,7 +4,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL, isSupabaseConfigured } from "@/lib/sup
 
 const ROTAS_PROTEGIDAS = ["/painel", "/novo-evento", "/editar-evento", "/evento"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (!isSupabaseConfigured) return NextResponse.next();
 
   let response = NextResponse.next({ request });

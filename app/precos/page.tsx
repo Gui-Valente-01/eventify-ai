@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
 import { PLANS, PlanId } from "@/lib/plans";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function PrecosPage() {
+  const router = useRouter();
   const { isAuthenticated, isConfigured } = useAuth();
   const [carregando, setCarregando] = useState<PlanId | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -15,7 +17,7 @@ export default function PrecosPage() {
   async function assinar(planId: PlanId) {
     setAviso(null);
     if (isConfigured && !isAuthenticated) {
-      window.location.href = `/login?redirect=/precos`;
+      router.push("/login?redirect=/precos");
       return;
     }
 
@@ -30,7 +32,7 @@ export default function PrecosPage() {
       if (!res.ok) {
         setAviso(data.error || "Não foi possível iniciar o checkout.");
       } else if (data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
       } else {
         setAviso(data.message || "Pagamentos ainda não estão ativos. Configure as variáveis Stripe.");
       }

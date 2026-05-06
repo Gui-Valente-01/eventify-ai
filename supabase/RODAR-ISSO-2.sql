@@ -1,4 +1,5 @@
 -- =============================================================
+-- =============================================================
 -- Eventify AI — Parte 2: Admin + tracking de uso da IA
 -- Rode ESTE arquivo INTEIRO no SQL Editor (depois do RODAR-ISSO.sql)
 -- =============================================================
@@ -104,3 +105,25 @@ create policy "convidados_admin_read" on public.convidados
 --   set is_admin = true
 --   where id = (select id from auth.users where email = 'SEU@EMAIL.COM');
 -- =============================================================
+
+-- =============================================================
+-- Segurança extra: convidados só entram/leem em eventos publicados,
+-- enquanto o dono continua podendo gerenciar a própria lista.
+-- =============================================================
+drop policy if exists "convidados_owner_insert" on public.convidados;
+create policy "convidados_owner_insert" on public.convidados
+  for insert with check (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.owner_id = auth.uid())
+  );
+
+drop policy if exists "convidados_public_insert" on public.convidados;
+create policy "convidados_public_insert" on public.convidados
+  for insert with check (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.status in ('paid', 'published'))
+  );
+
+drop policy if exists "convidados_public_read" on public.convidados;
+create policy "convidados_public_read" on public.convidados
+  for select using (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.status in ('paid', 'published'))
+  );

@@ -35,16 +35,32 @@ create table if not exists public.eventos (
   nome text not null,
   tipo text not null,
   data date not null,
+  status text not null default 'preview',
   endereco jsonb not null default '{}'::jsonb,
   imagem_url text,
   briefing jsonb default '{}'::jsonb,
   site_gerado jsonb,
   site_html text,
+  paid_at timestamptz,
+  published_at timestamptz,
+  paid_plan text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 -- garante a unicidade owner+slug mesmo se a tabela já existia
+alter table public.eventos
+  add column if not exists status text not null default 'preview',
+  add column if not exists paid_at timestamptz,
+  add column if not exists published_at timestamptz,
+  add column if not exists paid_plan text;
+
+alter table public.eventos
+  drop constraint if exists eventos_status_check;
+alter table public.eventos
+  add constraint eventos_status_check
+  check (status in ('draft', 'preview', 'paid', 'published', 'archived'));
+
 create unique index if not exists eventos_owner_slug_key
   on public.eventos (owner_id, slug);
 
@@ -53,6 +69,9 @@ create index if not exists eventos_owner_idx
 
 create index if not exists eventos_slug_idx
   on public.eventos (slug);
+
+create index if not exists eventos_status_idx
+  on public.eventos (status, created_at desc);
 
 
 -- ================ BLOCO 4: tabela convidados =================
@@ -108,6 +127,15 @@ create policy "convidados_owner_select" on public.convidados
     )
   );
 
+drop policy if exists "convidados_owner_insert" on public.convidados;
+create policy "convidados_owner_insert" on public.convidados
+  for insert with check (
+    exists (
+      select 1 from public.eventos e
+      where e.id = evento_id and e.owner_id = auth.uid()
+    )
+  );
+
 drop policy if exists "convidados_owner_delete" on public.convidados;
 create policy "convidados_owner_delete" on public.convidados
   for delete using (
@@ -119,11 +147,21 @@ create policy "convidados_owner_delete" on public.convidados
 
 drop policy if exists "convidados_public_insert" on public.convidados;
 create policy "convidados_public_insert" on public.convidados
-  for insert with check (true);
+  for insert with check (
+    exists (
+      select 1 from public.eventos e
+      where e.id = evento_id and e.status in ('paid', 'published')
+    )
+  );
 
 drop policy if exists "convidados_public_read" on public.convidados;
 create policy "convidados_public_read" on public.convidados
-  for select using (true);
+  for select using (
+    exists (
+      select 1 from public.eventos e
+      where e.id = evento_id and e.status in ('paid', 'published')
+    )
+  );
 
 
 -- ================ BLOCO 6: trigger auto-profile ==============

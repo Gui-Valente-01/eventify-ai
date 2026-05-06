@@ -80,14 +80,22 @@ create policy "convidados_owner_select" on public.convidados
   for select using (
     exists (select 1 from public.eventos e where e.id = evento_id and e.owner_id = auth.uid())
   );
+create policy "convidados_owner_insert" on public.convidados
+  for insert with check (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.owner_id = auth.uid())
+  );
 create policy "convidados_owner_delete" on public.convidados
   for delete using (
     exists (select 1 from public.eventos e where e.id = evento_id and e.owner_id = auth.uid())
   );
 create policy "convidados_public_insert" on public.convidados
-  for insert with check (true);
+  for insert with check (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.status in ('paid', 'published'))
+  );
 create policy "convidados_public_read" on public.convidados
-  for select using (true);
+  for select using (
+    exists (select 1 from public.eventos e where e.id = evento_id and e.status in ('paid', 'published'))
+  );
 
 -- =============================================================
 -- Trigger: cria profile automático quando usuário se cadastra
