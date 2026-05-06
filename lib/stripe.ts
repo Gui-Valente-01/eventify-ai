@@ -56,6 +56,55 @@ function normalizeInvoice(raw: RawInvoice): StripeInvoice {
   };
 }
 
+/**
+ * Lista TODAS as invoices da conta criadas após `sinceUnix`.
+ * Pagina internamente com starting_after até esgotar ou bater em `maxPages`.
+ * Para painel financeiro do admin.
+ */
+export async function listAllInvoicesSince(
+  sinceUnix: number,
+  maxPages = 10
+): Promise<StripeInvoice[]> {
+  const key = getKey();
+  if (!key) return [];
+
+  const todas: StripeInvoice[] = [];
+  let startingAfter: string | null = null;
+
+  for (let page = 0; page < maxPages; page++) {
+    const params = new URLSearchParams({
+      limit: "100",
+      "created[gte]": String(sinceUnix),
+      status: "paid",
+    });
+    if (startingAfter) params.set("starting_after", startingAfter);
+
+    try {
+      const res = await fetch(`${STRIPE_API_BASE}/invoices?${params}`, {
+        headers: { Authorization: `Bearer ${key}` },
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        logger.error("stripe", "falha ao listar invoices da conta", null, {
+          status: res.status,
+        });
+        break;
+      }
+      const json = await res.json();
+      const data: RawInvoice[] = Array.isArray(json?.data) ? json.data : [];
+      if (data.length === 0) break;
+      todas.push(...data.map(normalizeInvoice));
+      if (!json.has_more) break;
+      startingAfter = data[data.length - 1].id;
+    } catch (err) {
+      logger.error("stripe", "erro inesperado em listAllInvoicesSince", err);
+      break;
+    }
+  }
+
+  return todas;
+}
+
 export async function listInvoices(
   customerId: string,
   limit = 20

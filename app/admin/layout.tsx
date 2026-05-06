@@ -20,6 +20,7 @@ export default async function AdminLayout({
             </Link>
             <nav className="hidden gap-1 text-sm font-semibold sm:flex">
               <NavLink href="/admin">Dashboard</NavLink>
+              <NavLink href="/admin/financeiro">Financeiro</NavLink>
               <NavLink href="/admin/usuarios">Usuários</NavLink>
               <NavLink href="/admin/eventos">Eventos</NavLink>
               <NavLink href="/admin/uso">Uso da IA</NavLink>
