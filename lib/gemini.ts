@@ -235,13 +235,26 @@ async function tryGenerate(
       preview: html.slice(0, 120),
     });
 
-    if (!quality.ok) {
-      logger.warn("gemini", "HTML invalido/incompleto", {
+    // Aceita HTML mesmo com warnings: o que importa é ter doctype + corpo
+    // mínimo. Reparo (que custaria +20s) virou opcional e só dispara se
+    // realmente está irrecuperável (sem doctype OU vazio).
+    const irrecuperavel = !quality.metrics.hasDoctype || quality.metrics.length < 3000;
+    if (irrecuperavel) {
+      logger.warn("gemini", "HTML irrecuperavel — vai pular pra proximo modelo", {
         model,
         reasons: quality.reasons,
         ...quality.metrics,
       });
       return { ok: true, html: null, usage, quality, rawHtml: html };
+    }
+
+    if (!quality.ok) {
+      // Tem warnings (Tailwind, seção faltando, etc) mas é usável. Aceita.
+      logger.info("gemini", "HTML aceito com warnings", {
+        model,
+        warnings: quality.reasons,
+        length: quality.metrics.length,
+      });
     }
 
     return { ok: true, html, usage, quality, rawHtml: html };
