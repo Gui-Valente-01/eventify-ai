@@ -34,7 +34,7 @@ export default function PrecosPage() {
       } else if (data.url) {
         window.location.assign(data.url);
       } else {
-        setAviso(data.message || "Pagamentos ainda não estão ativos. Configure as variáveis Stripe.");
+        setAviso(data.message || "Assinaturas ainda não estão ativas. Configure as variáveis Stripe.");
       }
     } catch {
       setAviso("Erro de rede. Tente novamente.");
@@ -54,7 +54,7 @@ export default function PrecosPage() {
             Preços <span className="text-gradient-aurora font-display italic">simples</span>, sem surpresas
           </h1>
           <p className="eventify-muted mx-auto mt-5 max-w-xl text-xl animate-fade-up animate-delay-2">
-            Pague só ao publicar. Crie, edite e regenere à vontade antes.
+            Assine um plano mensal, crie sites de eventos e publique quando aprovar.
           </p>
         </div>
       </section>
@@ -84,7 +84,7 @@ export default function PrecosPage() {
 
               <div className="mt-6 flex items-baseline gap-2">
                 <span className="text-5xl font-black text-[#090814]">{plano.precoFormatado}</span>
-                <span className="eventify-muted text-sm font-semibold">/ evento</span>
+                <span className="eventify-muted text-sm font-semibold">assinatura mensal</span>
               </div>
 
               <ul className="mt-8 space-y-3">
@@ -114,7 +114,7 @@ export default function PrecosPage() {
         </div>
 
         <p className="eventify-muted mx-auto mt-12 max-w-2xl text-center text-sm">
-          Pagamento via Stripe (cartão) ou Mercado Pago (Pix). Cancele quando quiser.{" "}
+          Assinatura recorrente via Stripe. Cancele quando quiser.{" "}
           <Link href="/painel" className="font-bold text-[#8847e7]">
             Voltar ao painel
           </Link>

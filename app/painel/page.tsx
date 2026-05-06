@@ -20,9 +20,9 @@ function PainelInner() {
   useEffect(() => {
     const checkout = searchParams.get("checkout");
     if (checkout === "success") {
-      setAviso({ tipo: "ok", texto: "Pagamento confirmado! Assim que o Stripe avisar o webhook, o site fica publicado." });
+      setAviso({ tipo: "ok", texto: "Assinatura confirmada! Assim que o Stripe avisar o webhook, o site fica publicado." });
     } else if (checkout === "cancel") {
-      setAviso({ tipo: "aviso", texto: "Pagamento cancelado. Você pode tentar novamente quando quiser." });
+      setAviso({ tipo: "aviso", texto: "Checkout cancelado. Você pode tentar novamente quando quiser." });
     }
   }, [searchParams]);
 
@@ -121,7 +121,7 @@ function PainelInner() {
       } else {
         setAviso({
           tipo: "aviso",
-          texto: data.message || "Configure o Stripe para ativar a publicação paga.",
+          texto: data.message || "Configure o Stripe para ativar assinatura e publicação.",
         });
       }
     } catch {
@@ -298,7 +298,7 @@ function PainelInner() {
                             <Spinner className="h-4 w-4" /> Abrindo checkout...
                           </>
                         ) : (
-                          <>Publicar por R$49</>
+                          <>Assinar e publicar</>
                         )}
                       </button>
                     )}

@@ -131,7 +131,15 @@ async function checkStripe(): Promise<CheckResult> {
         detail: data?.error?.message || JSON.stringify(data).slice(0, 300),
       };
     }
-    return { status: "ok", message: "Stripe conectado e price intermediário encontrado.", httpStatus: res.status };
+    if (!data?.recurring) {
+      return {
+        status: "erro",
+        message: "Stripe conectado, mas o price testado nao e recorrente.",
+        httpStatus: res.status,
+        detail: "Use price mensal/recorrente nas variaveis STRIPE_PRICE_* ou troque o checkout para pagamento unico.",
+      };
+    }
+    return { status: "ok", message: "Stripe conectado e price recorrente encontrado.", httpStatus: res.status };
   } catch (error) {
     return { status: "erro", message: "Falha de rede/conexão no Stripe.", detail: jsonError(error) };
   } finally {

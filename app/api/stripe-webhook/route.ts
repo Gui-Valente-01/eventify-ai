@@ -1,10 +1,48 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
+import type { PlanId } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
 const WEBHOOK_TOLERANCE_SECONDS = 300;
+
+const STRIPE_PRICE_TO_PLAN = ([
+  [process.env.STRIPE_PRICE_BASICO, "basico"],
+  [process.env.STRIPE_PRICE_INTERMEDIARIO, "intermediario"],
+  [process.env.STRIPE_PRICE_PREMIUM, "premium"],
+] satisfies Array<[string | undefined, PlanId]>).reduce<Record<string, PlanId>>((acc, [priceId, plan]) => {
+  if (priceId) acc[priceId] = plan;
+  return acc;
+}, {});
+
+type CheckoutSession = {
+  client_reference_id?: string;
+  metadata?: { plan?: string; user_id?: string; event_id?: string; kind?: string };
+};
+
+type StripeSubscription = {
+  status?: string;
+  metadata?: { plan?: string; user_id?: string; event_id?: string; kind?: string };
+  items?: {
+    data?: Array<{
+      price?: {
+        id?: string;
+      };
+    }>;
+  };
+};
+
+function getPlanFromSubscription(subscription: StripeSubscription) {
+  const plan = subscription.metadata?.plan;
+  if (plan === "basico" || plan === "intermediario" || plan === "premium") return plan;
+  const priceId = subscription.items?.data?.[0]?.price?.id;
+  return priceId ? STRIPE_PRICE_TO_PLAN[priceId] : undefined;
+}
+
+function shouldDowngradeSubscription(status?: string) {
+  return status === "canceled" || status === "unpaid" || status === "incomplete_expired";
+}
 
 export async function POST(req: Request) {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -38,10 +76,7 @@ export async function POST(req: Request) {
   }
 
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as {
-      client_reference_id?: string;
-      metadata?: { plan?: string; user_id?: string; event_id?: string; kind?: string };
-    };
+    const session = event.data.object as CheckoutSession;
     const userId = session.metadata?.user_id || session.client_reference_id;
     const plan = session.metadata?.plan;
     const eventId = session.metadata?.event_id;
@@ -80,6 +115,28 @@ export async function POST(req: Request) {
       }
     } else {
       logger.warn("stripe-webhook", "Supabase não configurado — pagamento ignorado", { eventId });
+    }
+  }
+
+  if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as StripeSubscription;
+    const userId = subscription.metadata?.user_id;
+    const plan = getPlanFromSubscription(subscription);
+    const nextPlan = event.type === "customer.subscription.deleted" || shouldDowngradeSubscription(subscription.status)
+      ? "free"
+      : plan;
+
+    if (supabaseUrl && serviceRoleKey && userId && nextPlan) {
+      const admin = createClient(supabaseUrl, serviceRoleKey);
+      const { error } = await admin.from("profiles").update({ plan: nextPlan }).eq("id", userId);
+      if (error) {
+        logger.error("stripe-webhook", "falha ao atualizar plano da assinatura", error, {
+          userId,
+          plan: nextPlan,
+          status: subscription.status,
+        });
+        return NextResponse.json({ error: "Falha ao processar assinatura." }, { status: 500 });
+      }
     }
   }
 

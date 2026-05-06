@@ -64,7 +64,7 @@ export default function CadastroPage() {
         <div className="eventify-card glass w-full max-w-md p-10 ring-glow animate-fade-up">
           <span className="eventify-kicker">✦ Criar conta</span>
           <h1 className="eventify-title mt-5 text-4xl">Comece grátis</h1>
-          <p className="eventify-muted mt-3">Sem cartão. Pague só ao publicar.</p>
+          <p className="eventify-muted mt-3">Sem cartão para começar. Assine só quando publicar.</p>
 
           <form onSubmit={cadastrar} className="mt-8 grid gap-4">
             <input

@@ -55,7 +55,7 @@ export default function PaginaCliente() {
             <span className="eventify-kicker">Preview protegido</span>
             <h1 className="eventify-title mt-5 text-4xl">Este site ainda não foi publicado</h1>
             <p className="eventify-muted mt-4 text-lg">
-              Status atual: <strong>{getStatusLabel(evento.status)}</strong>. O link final dos convidados fica liberado depois do pagamento/publicação.
+              Status atual: <strong>{getStatusLabel(evento.status)}</strong>. O link final dos convidados fica liberado depois da assinatura/publicação.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <a href={`/promocional/${slug}`} className="eventify-button eventify-button-ghost">

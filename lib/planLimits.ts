@@ -7,7 +7,7 @@ export type PlanLimits = {
   maxEventos: number;             // total que pode criar
   regeneracoesPorEvento: number;  // chamadas de IA por evento
   watermark: boolean;             // marca d'água no preview/site final
-  permitePublicar: boolean;       // pode pagar+publicar
+  permitePublicar: boolean;       // pode assinar+publicar
   qrCode: boolean;                // QR Code liberado
   templatesPremium: boolean;      // acesso a templates premium
   suportePrioritario: boolean;

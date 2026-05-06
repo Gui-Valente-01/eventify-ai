@@ -38,7 +38,7 @@ const agentMap = [
 ];
 
 const revenueLines = [
-  ["Publicacao avulsa", "R$29 a R$79 por evento"],
+  ["Assinatura mensal", "R$29 a R$79 por mes"],
   ["Planos premium", "Templates, dominio, RSVP avancado"],
   ["Parcerias B2B", "Cerimonialistas, buffets e produtoras"],
   ["Servicos extras", "Setup assistido, fotos, copy premium"],
@@ -228,7 +228,7 @@ export default function PitchPage() {
       <SlideShell number={4} kicker="Produto" title="Do cadastro ao site publicado, tudo dentro do mesmo fluxo.">
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div className="space-y-4">
-            {["Criar evento", "Gerar com IA", "Editar e aprovar", "Pagar para publicar", "Receber RSVP"].map((step, index) => (
+            {["Criar evento", "Gerar com IA", "Editar e aprovar", "Assinar e publicar", "Receber RSVP"].map((step, index) => (
               <div key={step} className="eventify-card flex items-center gap-5 p-5">
                 <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-[#f3effb] text-lg font-black text-[#8847e7]">
                   {index + 1}
@@ -263,7 +263,7 @@ export default function PitchPage() {
         </div>
       </SlideShell>
 
-      <SlideShell number={7} kicker="Receita" title="Monetizacao direta por publicacao, com aumento natural de ticket.">
+      <SlideShell number={7} kicker="Receita" title="Monetizacao recorrente com aumento natural de ticket.">
         <div className="grid gap-5 lg:grid-cols-4">
           {revenueLines.map(([title, text]) => (
             <article key={title} className="eventify-card p-7">
@@ -325,7 +325,7 @@ export default function PitchPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {[
               ["Foco", "Venda real para nichos de eventos"],
-              ["Prova", "Sites exemplo + pagamento por publicacao"],
+              ["Prova", "Sites exemplo + assinatura mensal"],
               ["Escala", "Templates, agentes e parcerias B2B"],
               ["Meta", "SaaS de criacao automatica de sites"],
             ].map(([title, text]) => (

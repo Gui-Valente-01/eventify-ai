@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const metrics = [
   { value: "minutos", label: "para criar um site de evento" },
-  { value: "R$49+", label: "por publicacao vendavel" },
+  { value: "R$49/mês", label: "assinatura recorrente vendavel" },
   { value: "5+", label: "estilos visuais prontos para escalar" },
   { value: "IA", label: "copy, layout, RSVP e otimizacao" },
 ];
@@ -26,7 +26,7 @@ const solutionFlow = [
   "Cliente informa os dados do evento",
   "Agentes interpretam objetivo, estilo e publico",
   "IA gera textos, template, cores e experiencia",
-  "Cliente revisa, paga e publica",
+  "Cliente revisa, assina e publica",
 ];
 
 const agentGroups = [
@@ -273,7 +273,7 @@ export default function ApresentacaoPage() {
             </span>
             <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl">Produto simples de vender, com upsells naturais.</h2>
             <p className="mt-5 text-lg leading-8 text-white/75">
-              O cliente paga para publicar. Antes disso, ele pode criar, visualizar e ajustar. O valor percebido aumenta com RSVP, personalizacao, dominio, templates premium e suporte para eventos maiores.
+              O cliente assina para publicar. Antes disso, ele pode criar, visualizar e ajustar. O valor percebido aumenta com RSVP, personalizacao, dominio, templates premium e suporte para eventos maiores.
             </p>
           </div>
 
@@ -285,7 +285,7 @@ export default function ApresentacaoPage() {
             ].map(([plan, price, description]) => (
               <article key={plan} className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur">
                 <p className="text-sm font-black uppercase tracking-widest text-white/60">{plan}</p>
-                <p className="mt-4 text-4xl font-black">{price}</p>
+                <p className="mt-4 text-4xl font-black">{price}/mês</p>
                 <p className="mt-3 text-sm font-semibold text-white/70">{description}</p>
               </article>
             ))}

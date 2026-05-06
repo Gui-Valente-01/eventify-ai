@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message:
-          "Pagamentos ainda não estão ativos. Configure STRIPE_SECRET_KEY e STRIPE_PRICE_* no .env.local para ativar o checkout.",
+          "Assinaturas ainda não estão ativas. Configure STRIPE_SECRET_KEY e STRIPE_PRICE_* recorrentes no .env.local para ativar o checkout.",
         configurado: false,
       },
       { status: 200 }
@@ -61,8 +61,9 @@ export async function POST(req: Request) {
   const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   try {
+    const kind = evento ? "event_publish" : "plan_purchase";
     const params = new URLSearchParams({
-      "mode": "payment",
+      "mode": "subscription",
       "line_items[0][price]": priceId,
       "line_items[0][quantity]": "1",
       "success_url": evento
@@ -75,10 +76,19 @@ export async function POST(req: Request) {
     if (user?.email) params.append("customer_email", user.email);
     if (user?.id) params.append("client_reference_id", user.id);
     params.append("metadata[plan]", planId);
-    params.append("metadata[kind]", evento ? "event_publish" : "plan_purchase");
+    params.append("metadata[kind]", kind);
+    params.append("subscription_data[metadata][plan]", planId);
+    params.append("subscription_data[metadata][kind]", kind);
     if (user?.id) params.append("metadata[user_id]", user.id);
-    if (evento?.id) params.append("metadata[event_id]", evento.id);
-    if (evento?.slug) params.append("metadata[event_slug]", evento.slug);
+    if (user?.id) params.append("subscription_data[metadata][user_id]", user.id);
+    if (evento?.id) {
+      params.append("metadata[event_id]", evento.id);
+      params.append("subscription_data[metadata][event_id]", evento.id);
+    }
+    if (evento?.slug) {
+      params.append("metadata[event_slug]", evento.slug);
+      params.append("subscription_data[metadata][event_slug]", evento.slug);
+    }
 
     const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",

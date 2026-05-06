@@ -30,7 +30,7 @@ const stats = [
   { valor: "2 min", label: "do briefing ao site publicado" },
   { valor: "5", label: "templates profissionais" },
   { valor: "100%", label: "mobile, responsivo e rápido" },
-  { valor: "R$ 29", label: "a partir de — pague só ao publicar" },
+  { valor: "R$ 29", label: "por mês no plano inicial" },
 ];
 
 export default function Home() {
@@ -71,7 +71,7 @@ export default function Home() {
           </div>
 
           <p className="eventify-muted mt-7 text-sm animate-fade-up animate-delay-4">
-            ✓ Sem cartão · ✓ Pré-visualização ilimitada · ✓ Pague só ao publicar
+            ✓ Sem cartão para criar · ✓ Pré-visualização ilimitada · ✓ Assinatura mensal ao publicar
           </p>
 
           <div className="mt-20 grid w-full max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-3xl bg-gradient-to-r from-purple-200 via-pink-200 to-amber-200 sm:grid-cols-4 animate-fade-up animate-delay-5">
@@ -259,7 +259,7 @@ export default function Home() {
               Pronto para criar?
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/85">
-              Crie sua conta em 30 segundos. Pague só quando publicar.
+              Crie sua conta em 30 segundos. Assine só quando estiver pronto para publicar.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
               <Link href="/cadastro" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-8 text-base font-black text-[#090814] shadow-2xl transition hover:scale-105">

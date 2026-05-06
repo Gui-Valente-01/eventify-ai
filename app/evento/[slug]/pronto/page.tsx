@@ -69,7 +69,7 @@ export default function EventoProntoPage() {
         window.location.assign(data.url);
         return;
       } else {
-        setAviso({ tipo: "aviso", texto: data.message || "Configure o Stripe para ativar checkout." });
+        setAviso({ tipo: "aviso", texto: data.message || "Configure o Stripe para ativar assinaturas." });
       }
     } catch {
       setAviso({ tipo: "erro", texto: "Erro de rede ao abrir checkout." });
@@ -212,7 +212,7 @@ export default function EventoProntoPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-xl font-black text-[#090814]">{plano.precoFormatado}</p>
-                          <p className="eventify-muted text-[10px]">/evento</p>
+                          <p className="eventify-muted text-[10px]">mensal</p>
                           {publicando === plano.id && (
                             <Spinner className="ml-auto mt-1 h-4 w-4" />
                           )}
