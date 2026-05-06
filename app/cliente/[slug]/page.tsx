@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
 import { useEventoPublico } from "@/hooks/useEventoPublico";
+import { useTrackView } from "@/hooks/useTrackView";
 import { formatarData, getTemplateId } from "@/lib/utils";
 import { isPublishedStatus, getStatusLabel } from "@/lib/publication";
 import { CLIENT_VISUALS, TemplateId } from "@/lib/visuals";
@@ -12,6 +13,13 @@ export default function PaginaCliente() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug as string);
   const { evento, isLoading, confirmarPresenca } = useEventoPublico(slug);
+
+  // Registra visita uma vez por sessão (apenas em sites publicados)
+  useTrackView({
+    eventoId: evento?.id,
+    slug,
+    enabled: Boolean(evento?.id) && isPublishedStatus(evento?.status),
+  });
 
   const [nomeConvidado, setNomeConvidado] = useState("");
   const [mensagem, setMensagem] = useState<{ tipo: "erro" | "ok"; texto: string } | null>(null);

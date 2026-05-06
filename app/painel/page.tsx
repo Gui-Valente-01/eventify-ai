@@ -4,16 +4,23 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEventos } from "@/hooks/useEventos";
+import { useEventViews } from "@/hooks/useEventViews";
 import { gerarSlug } from "@/lib/utils";
 import { gerarSiteAPI } from "@/lib/api";
 import { getStatusLabel, isPublishedStatus } from "@/lib/publication";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
+import EventStats from "@/components/EventStats";
 import { getPlanDisplayName, getSelectedPlanFromEvento, normalizePlanId } from "@/lib/planStrategy";
 
 function PainelInner() {
   const searchParams = useSearchParams();
   const { eventos, atualizarEvento, deletarEvento, isLoading } = useEventos();
+  const eventoIds = useMemo(
+    () => eventos.map((e) => e.id).filter((id): id is string => Boolean(id)),
+    [eventos]
+  );
+  const { counts: viewCounts } = useEventViews(eventoIds);
   const [regenerandoIndex, setRegenerandoIndex] = useState<number | null>(null);
   const [publicandoIndex, setPublicandoIndex] = useState<number | null>(null);
   const [aviso, setAviso] = useState<{ tipo: "erro" | "ok" | "aviso"; texto: string } | null>(null);
@@ -238,6 +245,11 @@ function PainelInner() {
                       <p>Qualidade dos agentes: {evento.siteGerado.qualityScore}/100</p>
                     )}
                   </div>
+                  <EventStats
+                    views={evento.id ? viewCounts[evento.id] ?? 0 : 0}
+                    rsvps={evento.convidados?.length ?? 0}
+                    isPublished={isPublishedStatus(evento.status)}
+                  />
                   {!isPublishedStatus(evento.status) && (
                     <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                       <p className="text-sm font-black text-amber-800">Preview gratuito ativo</p>
