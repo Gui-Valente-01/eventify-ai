@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
 import type { PlanId } from "@/lib/plans";
+import { verifyStripeSignature } from "@/lib/stripeWebhook";
 
 export const runtime = "nodejs";
-
-const WEBHOOK_TOLERANCE_SECONDS = 300;
 
 const STRIPE_PRICE_TO_PLAN = ([
   [process.env.STRIPE_PRICE_BASICO, "basico"],
@@ -160,57 +159,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ received: true });
-}
-
-async function verifyStripeSignature(payload: string, signature: string, secret: string): Promise<boolean> {
-  try {
-    const elements = signature.split(",").reduce<Record<string, string>>((acc, item) => {
-      const [k, v] = item.split("=");
-      if (k && v) acc[k] = v;
-      return acc;
-    }, {});
-    const timestamp = elements.t;
-    const v1 = elements.v1;
-    if (!timestamp || !v1) return false;
-
-    // Anti-replay: rejeita se timestamp > 5 min
-    const tsSeconds = parseInt(timestamp, 10);
-    if (!Number.isFinite(tsSeconds)) return false;
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    if (Math.abs(nowSeconds - tsSeconds) > WEBHOOK_TOLERANCE_SECONDS) {
-      logger.warn("stripe-webhook", "timestamp fora da tolerância (replay rejeitado)", {
-        ageSeconds: nowSeconds - tsSeconds,
-        tolerance: WEBHOOK_TOLERANCE_SECONDS,
-      });
-      return false;
-    }
-
-    const signedPayload = `${timestamp}.${payload}`;
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      enc.encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-    const sigBuffer = await crypto.subtle.sign("HMAC", key, enc.encode(signedPayload));
-    const expected = Array.from(new Uint8Array(sigBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    return timingSafeEqual(expected, v1);
-  } catch (err) {
-    logger.error("stripe-webhook", "erro ao validar assinatura", err);
-    return false;
-  }
-}
-
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return result === 0;
 }
