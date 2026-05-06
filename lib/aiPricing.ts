@@ -45,6 +45,18 @@ const PRICING: Record<string, ModelPricing> = {
     cacheReadPerMTok: 0.3125,
     cacheWritePerMTok: 1.25,
   },
+  "gemini-2.5-flash": {
+    inputPerMTok: 0.3,
+    outputPerMTok: 2.5,
+    cacheReadPerMTok: 0.075,
+    cacheWritePerMTok: 0.3,
+  },
+  "gemini-2.5-flash-lite": {
+    inputPerMTok: 0.1,
+    outputPerMTok: 0.4,
+    cacheReadPerMTok: 0.025,
+    cacheWritePerMTok: 0.1,
+  },
 };
 
 const DEFAULT_PRICING = PRICING["claude-haiku-4-5-20251001"];
