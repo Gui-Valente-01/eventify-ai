@@ -24,6 +24,7 @@ export default async function AdminLayout({
               <NavLink href="/admin/usuarios">Usuários</NavLink>
               <NavLink href="/admin/eventos">Eventos</NavLink>
               <NavLink href="/admin/uso">Uso da IA</NavLink>
+              <NavLink href="/admin/errors">Erros</NavLink>
             </nav>
           </div>
           <div className="flex items-center gap-4">

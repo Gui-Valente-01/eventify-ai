@@ -41,5 +41,41 @@ export const logger = {
   },
   error(scope: string, message: string, error?: unknown, data?: Record<string, unknown>) {
     console.error(serialize("error", scope, message, data, error));
+
+    // Persiste em error_logs via service_role (fire-and-forget).
+    // Só roda no server — nunca tenta importar no client.
+    if (typeof window === "undefined") {
+      void persistServerError(scope, message, error, data);
+    }
   },
 };
+
+async function persistServerError(
+  scope: string,
+  message: string,
+  error: unknown,
+  data?: Record<string, unknown>
+) {
+  try {
+    // Lazy import pra evitar bundle no client
+    const { reportError } = await import("@/lib/errorReporter");
+    const errObj =
+      error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : error !== undefined
+          ? { name: "Unknown", message: String(error) }
+          : null;
+
+    await reportError({
+      scope,
+      level: "error",
+      message,
+      errorName: errObj?.name,
+      errorMessage: errObj?.message,
+      stack: errObj?.stack,
+      context: data,
+    });
+  } catch {
+    // Nunca quebra o logger
+  }
+}

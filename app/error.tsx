@@ -16,12 +16,27 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log estruturado pra debugging em produção
     console.error("[error-boundary]", {
       message: error.message,
       digest: error.digest,
       stack: error.stack?.split("\n").slice(0, 5).join("\n"),
     });
+
+    // Manda pro servidor (fire-and-forget) pra cair em /admin/errors
+    fetch("/api/log-error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scope: "boundary",
+        message: error.message || "Erro no boundary",
+        errorName: error.name,
+        errorMessage: error.message,
+        stack: error.stack,
+        url: typeof window !== "undefined" ? window.location.href : undefined,
+        context: { digest: error.digest },
+      }),
+      keepalive: true,
+    }).catch(() => {});
   }, [error]);
 
   return (
