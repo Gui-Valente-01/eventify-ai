@@ -11,6 +11,7 @@ import { getStatusLabel, isPublishedStatus } from "@/lib/publication";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
 import EventStats from "@/components/EventStats";
+import EmptyState from "@/components/EmptyState";
 import { getPlanDisplayName, getSelectedPlanFromEvento, normalizePlanId } from "@/lib/planStrategy";
 
 function PainelInner() {
@@ -192,13 +193,14 @@ function PainelInner() {
         </section>
 
         {eventos.length === 0 ? (
-          <div className="eventify-card border-dashed p-14 text-center">
-            <p className="text-2xl font-black">Nenhum evento criado ainda.</p>
-            <p className="eventify-muted mt-3">Comece criando o primeiro evento para testar o painel e o RSVP.</p>
-            <Link href="/novo-evento" className="eventify-button eventify-button-primary mt-6">
-              Criar primeiro evento →
-            </Link>
-          </div>
+          <EmptyState
+            icon="🎉"
+            title="Você ainda não criou nenhum evento"
+            description="Em 4 etapas a IA monta um site completo, com RSVP, mapa e QR Code. Sem cartão pra começar."
+            action={{ label: "Criar meu primeiro evento →", href: "/novo-evento" }}
+            secondaryAction={{ label: "Ver exemplos", href: "/exemplos", variant: "ghost" }}
+            className="mx-auto max-w-2xl"
+          />
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             {eventos.map((evento, index) => (

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
+import EmptyState from "@/components/EmptyState";
 import { useEventoPublico } from "@/hooks/useEventoPublico";
 import { useTrackView } from "@/hooks/useTrackView";
 import { formatarData, getTemplateId } from "@/lib/utils";
@@ -44,11 +45,13 @@ export default function PaginaCliente() {
       <main className="eventify-page">
         <BrandHeader />
         <section className="eventify-section flex justify-center">
-          <div className="eventify-card max-w-xl p-10 text-center">
-            <span className="eventify-kicker">Evento</span>
-            <h1 className="eventify-title mt-5 text-4xl">Evento não encontrado</h1>
-            <p className="eventify-muted mt-3">Confira se o link recebido está correto.</p>
-          </div>
+          <EmptyState
+            icon="🔍"
+            title="Evento não encontrado"
+            description="Confira se o link está correto. Pode ter sido removido ou ainda não foi publicado."
+            action={{ label: "Voltar para o início", href: "/" }}
+            className="max-w-xl"
+          />
         </section>
       </main>
     );

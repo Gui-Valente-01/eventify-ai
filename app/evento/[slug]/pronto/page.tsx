@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
 import Spinner from "@/components/Spinner";
+import EmptyState from "@/components/EmptyState";
 import { useEventos } from "@/hooks/useEventos";
 import { gerarSiteAPI } from "@/lib/api";
 import { gerarSlug } from "@/lib/utils";
@@ -93,13 +94,14 @@ export default function EventoProntoPage() {
       <main className="eventify-page">
         <BrandHeader />
         <section className="eventify-section flex justify-center">
-          <div className="eventify-card max-w-xl p-10 text-center">
-            <span className="eventify-kicker">Evento</span>
-            <h1 className="eventify-title mt-5 text-4xl">Evento não encontrado</h1>
-            <Link href="/painel" className="eventify-button eventify-button-ghost mt-7">
-              Voltar ao painel
-            </Link>
-          </div>
+          <EmptyState
+            icon="🔍"
+            title="Evento não encontrado"
+            description="Esse evento pode ter sido apagado ou nunca existiu nessa conta."
+            action={{ label: "Voltar ao painel", href: "/painel", variant: "ghost" }}
+            secondaryAction={{ label: "Criar novo evento", href: "/novo-evento" }}
+            className="max-w-xl"
+          />
         </section>
       </main>
     );
