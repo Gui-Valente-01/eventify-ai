@@ -129,7 +129,13 @@ ${spec.motionRules.map((r, i) => `  ${i + 1}. ${r}`).join("\n")}
 
 DIRETIVAS CRIATIVAS:
 - Vibe geral: ${args.design.template.layout} (${args.design.layoutIntent})
-- Diferenciais: ${args.design.differentiators.join(" · ")}
+- Plano: ${strategy.nome} (intensidade: ${strategy.intensidade})${
+  strategy.intensidade === "premium"
+    ? "\n- ⭐ MODO PREMIUM ATIVO: aplique os diferenciais abaixo de forma exuberante. Layout precisa parecer um site editorial de R$ 8.000+, NÃO um template comum. Tipografia maior, espaçamentos generosos, micro-detalhes."
+    : ""
+}
+- Diferenciais OBRIGATÓRIOS (aplicar TODOS):
+${args.design.differentiators.map((d) => `  • ${d}`).join("\n")}
 - Tom de voz: ${args.interpretation.mood}
 - Público alvo: ${args.interpretation.audience}
 

@@ -34,9 +34,9 @@ const PLAN_INFO: Record<
   },
   premium: {
     nome: "Premium",
-    modeloIA: "IA Premium",
+    modeloIA: "IA Premium · Templates exclusivos",
     cor: "bg-amber-100 text-amber-700 border-amber-200",
-    descricao: "IA mais avançada, copy autoral e regeneração ilimitada.",
+    descricao: "IA mais avançada, templates premium exclusivos por nicho, copy autoral e regeneração ilimitada.",
   },
 };
 

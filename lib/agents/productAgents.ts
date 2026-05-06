@@ -1,4 +1,4 @@
-import { selectEventTemplate } from "@/lib/templates";
+import { selectEventTemplate, getActiveTemplateVariant } from "@/lib/templates";
 import { getPlanGenerationStrategy, getSelectedPlanFromEvento } from "@/lib/planStrategy";
 import { buildPalette } from "./colorUtils";
 import type { DesignSpec } from "./types";
@@ -99,8 +99,26 @@ export function designerAgent(
     premium: fontByLayout[template.layout] || "Inter",
   };
 
-  const palette = buildPalette(color);
-  const display = planFonts[strategy.intensidade];
+  const isPremium = strategy.intensidade === "premium";
+  const variant = getActiveTemplateVariant(template, isPremium);
+
+  // Premium: usa paleta da variante (override sobre cor do briefing).
+  // Free/Basic/Inter: usa cor do briefing como primary.
+  const palette = isPremium
+    ? {
+        primary: variant.palette.primary,
+        primaryDark: variant.palette.text,
+        primarySoft: variant.palette.soft,
+        accent: variant.palette.secondary,
+        surface: "#ffffff",
+        surfaceAlt: variant.palette.soft,
+        ink: variant.palette.text,
+        inkMuted: "#5f5a72",
+      }
+    : buildPalette(color);
+
+  const display = isPremium ? variant.fontDisplay : planFonts[strategy.intensidade];
+  const body = isPremium ? variant.fontBody : "Inter";
 
   const motionByLayout: Record<string, string[]> = {
     elegant: [
@@ -130,23 +148,28 @@ export function designerAgent(
     ],
   };
 
+  const motionRulesBase = motionByLayout[template.layout] || motionByLayout.celebration;
+  const motionRules = isPremium && variant.motionTraits.length > 0
+    ? [...variant.motionTraits, ...motionRulesBase]
+    : motionRulesBase;
+
   const spec: DesignSpec = {
     palette,
     fontDisplay: `'${display}', serif`,
-    fontBody: "'Inter', system-ui, sans-serif",
+    fontBody: `'${body}', system-ui, sans-serif`,
     scale: {
-      h1: "clamp(2.5rem, 6vw, 5rem)",
+      h1: isPremium ? "clamp(3rem, 8vw, 7rem)" : "clamp(2.5rem, 6vw, 5rem)",
       h2: "clamp(1.8rem, 4vw, 3rem)",
       h3: "1.5rem",
       body: "1.0625rem",
     },
     radius: { card: "20px", button: "999px" },
     spacing: {
-      sectionY: "clamp(64px, 9vw, 120px)",
+      sectionY: isPremium ? "clamp(96px, 12vw, 160px)" : "clamp(64px, 9vw, 120px)",
       cardPad: "clamp(24px, 3vw, 40px)",
       gap: "clamp(16px, 2vw, 32px)",
     },
-    motionRules: motionByLayout[template.layout] || motionByLayout.celebration,
+    motionRules,
   };
 
   return {
@@ -165,6 +188,7 @@ export function designerAgent(
       ...strategy.design,
     ],
     differentiators: [
+      ...(isPremium ? variant.layoutTraits : []),
       ...(compositionByLayout[template.layout] || compositionByLayout.celebration),
       ...planDifferentiators[strategy.intensidade],
     ],
