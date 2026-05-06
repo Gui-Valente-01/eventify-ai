@@ -20,10 +20,11 @@ const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
 const DEFAULT_MAX_HTML_TOKENS = 14000;
 
-export const runtime = "nodejs";
-// Vercel Hobby corta em 60s; Pro permite até 300s. Mantemos 60 pra
-// compatibilidade. Se subir pra Pro, pode aumentar pra 300.
-export const maxDuration = 60;
+// Edge Runtime: timeout até 300s na Vercel Hobby (vs 60s do Node).
+// Todas as deps usadas (Gemini SDK, Anthropic SDK, Supabase SSR) são
+// fetch-based e funcionam no Edge.
+export const runtime = "edge";
+export const maxDuration = 300;
 
 type Usage = TokenUsage;
 
