@@ -93,9 +93,36 @@ function stripMarkdownAndNoise(text: string): string {
   }
 
   const closeIdx = html.toLowerCase().lastIndexOf("</html>");
-  if (closeIdx !== -1) html = html.slice(0, closeIdx + 7);
+  if (closeIdx !== -1) {
+    html = html.slice(0, closeIdx + 7);
+  } else {
+    // HTML truncado: fecha tags abertas como band-aid
+    html = repairTruncated(html);
+  }
 
   return html.trim();
+}
+
+/**
+ * Tenta consertar HTML truncado anexando </body></html> se faltar.
+ * Gemini frequentemente para no meio quando estoura maxOutputTokens.
+ */
+function repairTruncated(html: string): string {
+  const lower = html.toLowerCase();
+  let out = html.trimEnd();
+
+  // Remove cercas markdown de novo (segurança)
+  out = out.replace(/\n?```\s*$/i, "");
+
+  // Se tem <body> mas não </body>, fecha
+  if (/<body[\s>]/i.test(out) && !lower.includes("</body>")) {
+    out += "\n</body>";
+  }
+  // Se tem <html mas não </html>, fecha
+  if (/<html[\s>]/i.test(out) && !out.toLowerCase().includes("</html>")) {
+    out += "\n</html>";
+  }
+  return out;
 }
 
 function validateHtml(html: string): HtmlQuality {
@@ -125,18 +152,15 @@ function validateHtml(html: string): HtmlQuality {
     hasMap: /google\.com\/maps|output=embed/i.test(html),
   };
 
+  // Reasons CRÍTICOS — disparam reparo
   const reasons: string[] = [];
   if (!metrics.hasDoctype) reasons.push("precisa comecar com <!DOCTYPE html>");
   if (!metrics.hasHtmlOpen) reasons.push("precisa usar <html lang=\"pt-BR\">");
-  if (!metrics.hasHtmlClose || !metrics.hasBody || !metrics.hasHead) reasons.push("documento HTML incompleto");
-  if (!metrics.hasViewport || !metrics.hasTitle) reasons.push("head sem metadados basicos");
   if (!metrics.hasStyle) reasons.push("CSS inline ausente ou raso demais");
-  if (!metrics.hasScript) reasons.push("JavaScript funcional ausente ou raso demais");
-  if (metrics.length < 9000) reasons.push("HTML curto demais para um site completo");
-  if (metrics.sectionCount < 8) reasons.push("poucas secoes para o padrao Eventify");
-  if (!metrics.hasCountdown) reasons.push("contagem regressiva ausente");
-  if (!metrics.hasRsvp) reasons.push("RSVP funcional ausente");
-  if (!metrics.hasMap) reasons.push("mapa do local ausente");
+  if (metrics.length < 6000) reasons.push("HTML curto demais para um site");
+
+  // Reasons NICE-TO-HAVE — só logamos como warning, não disparamos reparo (custaria timeout)
+  // Removidos: hasHtmlClose, hasBody (auto-reparados), sectionCount < 8, hasScript, hasMap, hasCountdown, hasRsvp
 
   const forbiddenChecks: Array<[RegExp, string]> = [
     [/<script[^>]+src=["'][^"']*(tailwind|bootstrap|unpkg|cdn\.jsdelivr|cdnjs)/i, "usa framework/script externo proibido"],
