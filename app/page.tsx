@@ -86,7 +86,7 @@ export default function Home() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-black/70">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Powered by Claude · Anthropic
+                Powered by IA · 100% automático
               </div>
 
               <h1 className="mt-8 text-[clamp(2.75rem,7vw,5.5rem)] font-black leading-[0.95] tracking-[-0.03em]">

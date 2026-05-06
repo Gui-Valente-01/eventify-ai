@@ -23,7 +23,7 @@ export default function ExemplosPage() {
           Cinco mundos. <span className="text-gradient-aurora font-display italic">Um clique cada.</span>
         </h1>
         <p className="eventify-muted mx-auto mt-4 max-w-2xl text-xl animate-fade-up animate-delay-2">
-          Cada exemplo é um site real, com layout, copy e cores escolhidos pela IA Claude para o tipo de evento.
+          Cada exemplo é um site real, com layout, copy e cores escolhidos pela IA para o tipo de evento.
         </p>
       </section>
 

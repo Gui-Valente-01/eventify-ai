@@ -42,8 +42,8 @@ export default function EventoProntoPage() {
       setAviso({
         tipo: resultado.aiAvailable ? "ok" : "aviso",
         texto: resultado.aiAvailable
-          ? "Site regenerado com Claude."
-          : "Site regenerado com agente local. Configure ANTHROPIC_API_KEY para usar Claude.",
+          ? "Site regenerado com sucesso."
+          : "Site regenerado em modo básico. A IA avançada está temporariamente indisponível.",
       });
     } catch (error) {
       setAviso({ tipo: "erro", texto: error instanceof Error ? error.message : "Erro ao salvar." });

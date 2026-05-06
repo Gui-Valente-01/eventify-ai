@@ -8,6 +8,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { calcularCustoUSD, type TokenUsage } from "@/lib/aiPricing";
 import { checkPodeCriarEvento, checkPodeRegenerar } from "@/lib/planLimits";
 import { logger } from "@/lib/logger";
+import { generateHtmlWithGemini, isGeminiAvailable, getGeminiModel } from "@/lib/gemini";
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
@@ -101,7 +102,7 @@ async function logUsage(args: {
   usage: Usage;
   status: "ok" | "error";
   errorMessage?: string;
-  provider: "anthropic" | "local";
+  provider: "anthropic" | "gemini" | "local";
   agentRun?: AgentRunSummary;
   qualityScore?: number;
 }) {
@@ -359,6 +360,59 @@ async function generateCopyJSON(
   }
 }
 
+type GenerationResult = {
+  copy: GeneratedSite | null;
+  html: string | null;
+  usage: Usage;
+  error?: string;
+  provider: "anthropic" | "gemini";
+  modelUsed: string;
+};
+
+async function generateWithGemini(
+  evento: EventoDados,
+  localRun: AgentCompanyResult
+): Promise<GenerationResult> {
+  const model = getGeminiModel();
+  const template = selectEventTemplate(evento.tipo);
+  const fallback = localRun.siteGerado as GeneratedSite;
+
+  const result = await generateHtmlWithGemini({
+    systemPrompt: SYSTEM_PROMPT,
+    userPrompt: buildUserPrompt(evento, localRun.promptContext),
+    maxTokens: getMaxHtmlTokens(),
+  });
+
+  // Aproveita a copy do agente local pra preencher campos textuais
+  const copy: GeneratedSite | null = result.html
+    ? {
+        ...fallback,
+        templateId: template.id,
+        templateName: template.name,
+        layout: template.layout,
+        palette: template.palette,
+        generatedBy: "claude",
+        qualityScore: localRun.agentRun.quality.score,
+        qualityWarnings: localRun.agentRun.quality.warnings,
+        businessSuggestions: localRun.agentRun.business.upsells,
+        agentRun: {
+          ...localRun.agentRun,
+          mode: "ai-assisted",
+          finishedAt: new Date().toISOString(),
+        },
+      }
+    : null;
+
+  return {
+    copy,
+    html: result.html,
+    usage: result.usage,
+    error: result.error,
+    provider: "gemini",
+    modelUsed: result.model,
+  };
+}
+
 async function generateWithClaude(
   evento: EventoDados,
   modelId: string,
@@ -481,20 +535,51 @@ export async function POST(req: Request) {
   }
 
   const localRun = runAgentCompany(evento);
-  const { copy, html, usage, error } = await generateWithClaude(evento, model, localRun);
+
+  // Provider: Gemini é prioridade quando disponível (mais barato).
+  // Anthropic vira fallback se Gemini falhar.
+  let copy: GeneratedSite | null = null;
+  let html: string | null = null;
+  let usage: Usage = emptyUsage();
+  let error: string | undefined;
+  let providerUsed: "anthropic" | "gemini" = "anthropic";
+  let modelUsed: string = model;
+
+  if (isGeminiAvailable()) {
+    const r = await generateWithGemini(evento, localRun);
+    copy = r.copy;
+    html = r.html;
+    usage = r.usage;
+    error = r.error;
+    providerUsed = r.provider;
+    modelUsed = r.modelUsed;
+  }
+
+  // Fallback Anthropic se Gemini falhou OU se Gemini não está configurado
+  if (!html && process.env.ANTHROPIC_API_KEY) {
+    const r = await generateWithClaude(evento, model, localRun);
+    copy = r.copy;
+    html = r.html;
+    usage = r.usage;
+    error = r.error;
+    providerUsed = "anthropic";
+    modelUsed = model;
+  }
+
   const siteGerado = copy || (localRun.siteGerado as GeneratedSite);
   const agentRun = siteGerado.agentRun || localRun.agentRun;
+  const aiAvailable = isGeminiAvailable() || Boolean(process.env.ANTHROPIC_API_KEY);
 
-  if (process.env.ANTHROPIC_API_KEY) {
+  if (userId && aiAvailable) {
     await logUsage({
       userId,
       eventoId: evento.id ?? null,
-      model,
+      model: modelUsed,
       plan,
       usage,
       status: error ? "error" : "ok",
       errorMessage: error,
-      provider: "anthropic",
+      provider: providerUsed,
       agentRun,
       qualityScore: siteGerado.qualityScore,
     });
@@ -507,8 +592,8 @@ export async function POST(req: Request) {
     agentRun,
     quality: agentRun.quality,
     business: agentRun.business,
-    aiAvailable: Boolean(process.env.ANTHROPIC_API_KEY),
-    model,
+    aiAvailable,
+    model: modelUsed,
     plan,
   });
 }

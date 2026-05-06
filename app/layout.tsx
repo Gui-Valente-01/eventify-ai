@@ -8,15 +8,15 @@ export const metadata: Metadata = {
     template: "%s | Eventify AI",
   },
   description:
-    "Crie sites promocionais profissionais para casamentos, aniversários, eventos corporativos e festas. Conteúdo gerado pela IA Claude da Anthropic.",
+    "Crie sites promocionais profissionais para casamentos, aniversários, eventos corporativos e festas. Conteúdo gerado por IA em minutos.",
   keywords: [
     "site de eventos",
     "convite digital",
     "casamento",
     "aniversário",
     "RSVP",
-    "IA Claude",
-    "Anthropic",
+    "site com IA",
+    "convite online",
   ],
   authors: [{ name: "Eventify AI" }],
   openGraph: {
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     siteName: "Eventify AI",
     title: "Eventify AI — Sites de eventos com IA",
     description:
-      "Crie sites promocionais profissionais para qualquer evento em minutos. IA Claude monta layout e conteúdo.",
+      "Crie sites promocionais profissionais para qualquer evento em minutos. A IA monta layout e conteúdo automaticamente.",
   },
   twitter: {
     card: "summary_large_image",

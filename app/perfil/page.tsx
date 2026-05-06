@@ -13,25 +13,25 @@ const PLAN_INFO: Record<
 > = {
   free: {
     nome: "Gratuito",
-    modeloIA: "Claude Haiku 4.5",
+    modeloIA: "IA Básica",
     cor: "bg-slate-100 text-slate-700 border-slate-200",
     descricao: "Acesso para experimentar a plataforma. Site gerado com IA básica.",
   },
   basico: {
     nome: "Básico",
-    modeloIA: "Claude Haiku 4.5",
+    modeloIA: "IA Rápida",
     cor: "bg-blue-100 text-blue-700 border-blue-200",
     descricao: "Site simples e responsivo, gerado com IA rápida.",
   },
   intermediario: {
     nome: "Intermediário",
-    modeloIA: "Claude Sonnet 4.6",
+    modeloIA: "IA Avançada",
     cor: "bg-purple-100 text-purple-700 border-purple-200",
     descricao: "Site completo com IA avançada, RSVP e mapa integrado.",
   },
   premium: {
     nome: "Premium",
-    modeloIA: "Claude Opus 4.7",
+    modeloIA: "IA Premium",
     cor: "bg-amber-100 text-amber-700 border-amber-200",
     descricao: "IA mais avançada, copy autoral e regeneração ilimitada.",
   },

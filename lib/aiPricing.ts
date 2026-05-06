@@ -26,6 +26,25 @@ const PRICING: Record<string, ModelPricing> = {
     cacheReadPerMTok: 0.1,
     cacheWritePerMTok: 1.25,
   },
+  // Google Gemini (preços ~Maio/2026)
+  "gemini-2.0-flash-exp": {
+    inputPerMTok: 0,
+    outputPerMTok: 0,
+    cacheReadPerMTok: 0,
+    cacheWritePerMTok: 0,
+  },
+  "gemini-2.0-flash": {
+    inputPerMTok: 0.1,
+    outputPerMTok: 0.4,
+    cacheReadPerMTok: 0.025,
+    cacheWritePerMTok: 0.1,
+  },
+  "gemini-2.0-pro": {
+    inputPerMTok: 1.25,
+    outputPerMTok: 5,
+    cacheReadPerMTok: 0.3125,
+    cacheWritePerMTok: 1.25,
+  },
 };
 
 const DEFAULT_PRICING = PRICING["claude-haiku-4-5-20251001"];

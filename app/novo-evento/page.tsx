@@ -171,7 +171,7 @@ export default function NovoEvento() {
         setAviso({
           tipo: "aviso",
           texto:
-            "Site criado com agente local. Configure ANTHROPIC_API_KEY para conteúdo gerado por Claude.",
+            "Site criado em modo básico. A IA avançada está temporariamente indisponível.",
         });
         setTimeout(() => router.push(`/evento/${gerarSlug(salvo.nome)}/pronto`), 1500);
         return;
@@ -194,7 +194,7 @@ export default function NovoEvento() {
             <span className="eventify-kicker">✦ Novo evento</span>
             <h1 className="eventify-title mt-6 text-5xl">Vamos montar seu site</h1>
             <p className="eventify-muted mt-4 text-lg">
-              Em 4 passos a IA Claude monta um site completo, com conteúdo escrito sob medida.
+              Em 4 passos nossa IA monta um site completo, com conteúdo escrito sob medida.
             </p>
           </div>
           <Link href="/painel" className="eventify-button eventify-button-ghost">
@@ -300,7 +300,7 @@ export default function NovoEvento() {
                 {salvando ? (
                   <>
                     <Spinner className="h-5 w-5" />
-                    <span>Gerando site com Claude...</span>
+                    <span>Gerando site...</span>
                   </>
                 ) : (
                   <>Gerar site →</>

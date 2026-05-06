@@ -29,7 +29,7 @@ function PainelInner() {
   const metricas = useMemo(() => {
     const totalConvidados = eventos.reduce((sum, e) => sum + (e.convidados?.length || 0), 0);
     const sitesComIa = eventos.filter((e) => e.siteGerado).length;
-    const sitesClaude = eventos.filter((e) => e.siteGerado?.generatedBy === "claude").length;
+    const sitesIaAvancada = eventos.filter((e) => e.siteGerado?.generatedBy && e.siteGerado.generatedBy !== "local-agent").length;
     const agora = new Date();
     const eventosMes = eventos.filter((e) => {
       if (!e.data) return false;
@@ -47,7 +47,7 @@ function PainelInner() {
       totalEventos: eventos.length,
       totalConvidados,
       sitesComIa,
-      sitesClaude,
+      sitesIaAvancada,
       eventosMes,
       eventosFuturos,
       mediaConvidados,
@@ -81,8 +81,8 @@ function PainelInner() {
         setAviso({
           tipo: resultado.aiAvailable ? "ok" : "aviso",
           texto: resultado.aiAvailable
-            ? "Conteúdo regenerado pelo Claude com sucesso."
-            : "Conteúdo regenerado pelo agente local. Configure ANTHROPIC_API_KEY para usar Claude.",
+            ? "Conteúdo regenerado pela IA com sucesso."
+            : "Conteúdo regenerado em modo básico. A IA avançada está temporariamente indisponível.",
         });
       } catch (error) {
         const msg = error instanceof Error ? error.message : "Erro ao salvar.";
@@ -179,7 +179,7 @@ function PainelInner() {
         <section className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card label="Eventos" value={metricas.totalEventos} hint={`${metricas.eventosFuturos} futuros`} />
           <Card label="Convidados" value={metricas.totalConvidados} hint={`média ${metricas.mediaConvidados} por evento`} />
-          <Card label="Sites com IA" value={metricas.sitesComIa} hint={`${metricas.sitesClaude} via Claude`} />
+          <Card label="Sites com IA" value={metricas.sitesComIa} hint={`${metricas.sitesIaAvancada} com IA avançada`} />
           <Card label="Este mês" value={metricas.eventosMes} hint="eventos agendados" />
         </section>
 
@@ -229,7 +229,7 @@ function PainelInner() {
                     <p>
                       🤖{" "}
                       {evento.siteGerado
-                        ? `Site gerado via ${evento.siteGerado.generatedBy === "claude" ? "Claude" : evento.siteGerado.generatedBy}`
+                        ? `Site gerado ${evento.siteGerado.generatedBy === "local-agent" ? "em modo básico" : "com IA avançada"}`
                         : "Site ainda não gerado — clique em Regenerar IA"}
                     </p>
                     {typeof evento.siteGerado?.qualityScore === "number" && (

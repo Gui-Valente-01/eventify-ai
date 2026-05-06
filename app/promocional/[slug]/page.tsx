@@ -49,7 +49,7 @@ export default function Promocional() {
     );
   }
 
-  // Modo IA: site customizado gerado pelo Claude
+  // Modo IA: site customizado gerado pela IA
   if (evento.siteHtml) {
     const publicado = isPublishedStatus(evento.status);
     return (
@@ -57,7 +57,7 @@ export default function Promocional() {
         <div className="sticky top-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-[#1a0b3a] via-[#3a0e6e] to-[#7a1aab] px-4 py-2.5 text-white">
           <span className="text-xs font-bold sm:text-sm">
             <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-            {publicado ? "Site publicado pela IA Claude" : `Preview Eventify AI · ${getStatusLabel(evento.status)}`}
+            {publicado ? "Site publicado por Eventify AI" : `Preview Eventify AI · ${getStatusLabel(evento.status)}`}
           </span>
           <div className="flex items-center gap-2">
             {publicado ? (

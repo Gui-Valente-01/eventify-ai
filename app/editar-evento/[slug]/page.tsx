@@ -161,7 +161,7 @@ export default function EditarEvento() {
       if (!resultado.aiAvailable) {
         setAviso({
           tipo: "aviso",
-          texto: "Atualizado com agente local. Configure ANTHROPIC_API_KEY para usar Claude.",
+          texto: "Atualizado em modo básico. A IA avançada está temporariamente indisponível.",
         });
         setTimeout(() => router.push("/painel"), 1500);
         return;
@@ -326,7 +326,7 @@ export default function EditarEvento() {
             {salvando ? (
               <>
                 <Spinner className="h-5 w-5" />
-                <span>Atualizando site com Claude...</span>
+                <span>Atualizando site...</span>
               </>
             ) : (
               <>Salvar alterações →</>
