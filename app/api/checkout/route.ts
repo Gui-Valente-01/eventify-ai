@@ -39,6 +39,16 @@ export async function POST(req: Request) {
   const supabase = await getSupabaseServerClient();
   const user = supabase ? (await supabase.auth.getUser()).data.user : null;
   let evento: { id: string; slug: string; nome: string } | null = null;
+  let stripeCustomerId: string | null = null;
+
+  if (user && supabase) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    stripeCustomerId = profile?.stripe_customer_id ?? null;
+  }
 
   if (body.eventId) {
     if (!user || !supabase) {
@@ -73,7 +83,11 @@ export async function POST(req: Request) {
         ? `${origin}/painel?checkout=cancel&event=${evento.id}`
         : `${origin}/precos?checkout=cancel`,
     });
-    if (user?.email) params.append("customer_email", user.email);
+    if (stripeCustomerId) {
+      params.append("customer", stripeCustomerId);
+    } else if (user?.email) {
+      params.append("customer_email", user.email);
+    }
     if (user?.id) params.append("client_reference_id", user.id);
     params.append("metadata[plan]", planId);
     params.append("metadata[kind]", kind);

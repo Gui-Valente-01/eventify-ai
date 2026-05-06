@@ -17,11 +17,15 @@ const STRIPE_PRICE_TO_PLAN = ([
 }, {});
 
 type CheckoutSession = {
+  customer?: string;
+  subscription?: string;
   client_reference_id?: string;
   metadata?: { plan?: string; user_id?: string; event_id?: string; kind?: string };
 };
 
 type StripeSubscription = {
+  id?: string;
+  customer?: string;
   status?: string;
   metadata?: { plan?: string; user_id?: string; event_id?: string; kind?: string };
   items?: {
@@ -85,7 +89,14 @@ export async function POST(req: Request) {
       const admin = createClient(supabaseUrl, serviceRoleKey);
       try {
         if (userId && plan) {
-          const { error } = await admin.from("profiles").update({ plan }).eq("id", userId);
+          const { error } = await admin
+            .from("profiles")
+            .update({
+              plan,
+              stripe_customer_id: session.customer ?? null,
+              stripe_subscription_id: session.subscription ?? null,
+            })
+            .eq("id", userId);
           if (error) throw error;
         }
         if (eventId) {
@@ -128,7 +139,15 @@ export async function POST(req: Request) {
 
     if (supabaseUrl && serviceRoleKey && userId && nextPlan) {
       const admin = createClient(supabaseUrl, serviceRoleKey);
-      const { error } = await admin.from("profiles").update({ plan: nextPlan }).eq("id", userId);
+      const { error } = await admin
+        .from("profiles")
+        .update({
+          plan: nextPlan,
+          stripe_customer_id: subscription.customer ?? null,
+          stripe_subscription_id: subscription.id ?? null,
+          subscription_status: subscription.status ?? null,
+        })
+        .eq("id", userId);
       if (error) {
         logger.error("stripe-webhook", "falha ao atualizar plano da assinatura", error, {
           userId,

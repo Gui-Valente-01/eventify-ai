@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
+import ManageSubscriptionButton from "@/components/ManageSubscriptionButton";
+import PaymentHistory from "@/components/PaymentHistory";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { PLANS } from "@/lib/plans";
 import { formatUSD } from "@/lib/aiPricing";
+import { listInvoices } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +51,7 @@ export default async function Perfil() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, plan, is_admin, created_at")
+    .select("full_name, plan, is_admin, created_at, stripe_customer_id, subscription_status")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -56,7 +59,8 @@ export default async function Perfil() {
   const info = PLAN_INFO[plano] || PLAN_INFO.free;
   const planoPago = PLANS.find((p) => p.id === plano);
 
-  const [eventosRes, usageRes] = await Promise.all([
+  const stripeCustomerId = profile?.stripe_customer_id ?? null;
+  const [eventosRes, usageRes, invoices] = await Promise.all([
     supabase
       .from("eventos")
       .select("id, nome, tipo, data, slug, created_at")
@@ -67,6 +71,7 @@ export default async function Perfil() {
       .select("cost_usd, created_at, model")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
+    stripeCustomerId ? listInvoices(stripeCustomerId, 24) : Promise.resolve([]),
   ]);
 
   const eventos = eventosRes.data ?? [];
@@ -151,6 +156,11 @@ export default async function Perfil() {
                 <span className="rounded-md bg-white/80 px-2.5 py-1 font-mono font-semibold text-purple-700 shadow-sm">
                   IA: {info.modeloIA}
                 </span>
+                {profile?.subscription_status && (
+                  <span className="rounded-md bg-white/80 px-2.5 py-1 font-mono font-semibold text-[#5f5a72] shadow-sm">
+                    Stripe: {profile.subscription_status}
+                  </span>
+                )}
               </div>
               {planoPago && (
                 <ul className="mt-5 space-y-2 text-sm text-[#3a3650]">
@@ -165,6 +175,7 @@ export default async function Perfil() {
             </div>
 
             <div className="flex flex-col gap-3">
+              <ManageSubscriptionButton enabled={Boolean(profile?.stripe_customer_id)} />
               <Link
                 href="/precos"
                 className="eventify-button eventify-button-primary justify-center"
@@ -213,6 +224,9 @@ export default async function Perfil() {
             </div>
           </div>
         </section>
+
+        {/* Histórico de pagamentos */}
+        <PaymentHistory invoices={invoices} />
 
         {/* Eventos recentes */}
         <section className="mt-8">
