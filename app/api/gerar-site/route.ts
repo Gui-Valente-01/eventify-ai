@@ -18,7 +18,7 @@ import {
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
-const DEFAULT_MAX_HTML_TOKENS = 9000;
+const DEFAULT_MAX_HTML_TOKENS = 6000;
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -594,8 +594,10 @@ export async function POST(req: Request) {
     modelUsed = r.modelUsed;
   }
 
-  // Fallback Anthropic se Gemini falhou OU se Gemini não está configurado
-  if (!html && process.env.ANTHROPIC_API_KEY) {
+  // Fallback Anthropic está desativado em produção — está sem crédito e
+  // só causaria atraso. Re-ativar removendo o "false &&" abaixo quando o
+  // saldo voltar.
+  if (false && !html && process.env.ANTHROPIC_API_KEY) {
     tlog("before-claude-fallback");
     const r = await generateWithClaude(evento, model, localRun);
     tlog("after-claude-fallback");

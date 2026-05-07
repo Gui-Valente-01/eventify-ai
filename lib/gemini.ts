@@ -2,13 +2,10 @@ import { GoogleGenAI } from "@google/genai";
 import type { TokenUsage } from "@/lib/aiPricing";
 import { logger } from "@/lib/logger";
 
-// Model cascade: cheap/free-tier friendly first, stronger models after that.
+// Modelo único — cascade desativada pra caber no timeout 60s da Vercel.
+// Cada tentativa adicional custa +20s.
 const MODEL_FALLBACK_CHAIN = [
   "gemini-2.5-flash-lite",
-  "gemini-2.5-flash",
-  "gemini-flash-latest",
-  "gemini-1.5-flash-8b",
-  "gemini-1.5-flash-latest",
 ];
 
 export type GeminiResult = {
