@@ -18,13 +18,10 @@ import {
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
-const DEFAULT_MAX_HTML_TOKENS = 14000;
+const DEFAULT_MAX_HTML_TOKENS = 9000;
 
-// Edge Runtime: timeout até 300s na Vercel Hobby (vs 60s do Node).
-// Todas as deps usadas (Gemini SDK, Anthropic SDK, Supabase SSR) são
-// fetch-based e funcionam no Edge.
-export const runtime = "edge";
-export const maxDuration = 300;
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 type Usage = TokenUsage;
 
@@ -496,6 +493,11 @@ async function generateWithClaude(
 }
 
 export async function POST(req: Request) {
+  const t0 = Date.now();
+  const tlog = (label: string) => {
+    logger.info("gerar-site:timing", label, { elapsedMs: Date.now() - t0 });
+  };
+
   let evento: EventoDados;
   try {
     evento = (await req.json()) as EventoDados;
@@ -509,8 +511,10 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+  tlog("after-parse");
 
   const { model, plan, userId } = await resolveContext();
+  tlog("after-resolveContext");
 
   // ----- Validação de limites por plano + rate-limit (server-side) -----
   if (userId) {
@@ -565,7 +569,9 @@ export async function POST(req: Request) {
     }
   }
 
+  tlog("before-localRun");
   const localRun = runAgentCompany(evento);
+  tlog("after-localRun");
 
   // Provider: Gemini é prioridade quando disponível (mais barato).
   // Anthropic vira fallback se Gemini falhar.
@@ -577,7 +583,9 @@ export async function POST(req: Request) {
   let modelUsed: string = model;
 
   if (isGeminiAvailable()) {
+    tlog("before-gemini");
     const r = await generateWithGemini(evento, localRun);
+    tlog("after-gemini");
     copy = r.copy;
     html = r.html;
     usage = r.usage;
@@ -588,7 +596,9 @@ export async function POST(req: Request) {
 
   // Fallback Anthropic se Gemini falhou OU se Gemini não está configurado
   if (!html && process.env.ANTHROPIC_API_KEY) {
+    tlog("before-claude-fallback");
     const r = await generateWithClaude(evento, model, localRun);
+    tlog("after-claude-fallback");
     copy = r.copy;
     html = r.html;
     usage = r.usage;
