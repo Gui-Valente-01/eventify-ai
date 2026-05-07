@@ -18,7 +18,7 @@ import {
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
-const DEFAULT_MAX_HTML_TOKENS = 6000;
+const DEFAULT_MAX_HTML_TOKENS = 10000;
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -189,11 +189,13 @@ Construir um SITE COMPLETO (não uma landing page enxuta), com várias seções 
 - UM ÚNICO documento HTML 100% AUTOCONTIDO. SEM dependências externas além de Google Fonts.
 - Começa LITERALMENTE com \`<!DOCTYPE html>\`. Sem texto antes.
 - \`<html lang="pt-BR">\`, \`<head>\` com charset, viewport, title e meta description.
-- **TODO O CSS DEVE ESTAR INLINE em \`<style>\` no \`<head>\`. NÃO use Tailwind, NÃO use Bootstrap, NÃO use NENHUM framework CSS. Escreva CSS puro do zero.**
-- Use CSS Grid e Flexbox modernos. Custom properties (variáveis CSS) pra paleta.
+- **CSS INLINE em \`<style>\` no \`<head>\`. NÃO use Tailwind/Bootstrap/CDN. Escreva CSS puro.**
+- 🔴 **CRÍTICO: O CSS deve ter NO MÁXIMO 4000 caracteres.** Seja CONCISO — não invente 50 classes que ninguém usa, não duplique propriedades. CSS curto + body rico SEMPRE > CSS gigante + body cortado.
+- 🔴 **PRIORIZE O \`<body>\`**: hero, seções com texto real, RSVP, footer. O cliente quer VER conteúdo, não admirar seu CSS.
+- Use CSS Grid e Flexbox. Custom properties (variáveis) pra paleta.
 - Google Fonts pode usar (\`<link href="https://fonts.googleapis.com/...">\`).
-- Todo JS inline no final do \`<body>\` em \`<script>\` (countdown, RSVP alert, IntersectionObserver, smooth scroll).
-- Termina com \`</html>\`. SEM cercas markdown, SEM explicação, SEM comentário fora do HTML.
+- Todo JS inline no final do \`<body>\` em \`<script>\` (countdown, RSVP, smooth scroll).
+- Termina com \`</html>\`. SEM cercas markdown, SEM comentário fora do HTML.
 
 🚫 PROIBIDO:
 - Texto fora do HTML
