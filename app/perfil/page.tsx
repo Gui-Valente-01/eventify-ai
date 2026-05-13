@@ -10,32 +10,25 @@ import { listInvoices } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
-const PLAN_INFO: Record<
-  string,
-  { nome: string; modeloIA: string; cor: string; descricao: string }
-> = {
+const PLAN_INFO: Record<string, { nome: string; modeloIA: string; descricao: string }> = {
   free: {
     nome: "Gratuito",
     modeloIA: "IA Básica",
-    cor: "bg-slate-100 text-slate-700 border-slate-200",
     descricao: "Acesso para experimentar a plataforma. Site gerado com IA básica.",
   },
   basico: {
     nome: "Básico",
     modeloIA: "IA Rápida",
-    cor: "bg-blue-100 text-blue-700 border-blue-200",
     descricao: "Site simples e responsivo, gerado com IA rápida.",
   },
   intermediario: {
     nome: "Intermediário",
     modeloIA: "IA Avançada",
-    cor: "bg-purple-100 text-purple-700 border-purple-200",
     descricao: "Site completo com IA avançada, RSVP e mapa integrado.",
   },
   premium: {
     nome: "Premium",
     modeloIA: "IA Premium · Templates exclusivos",
-    cor: "bg-amber-100 text-amber-700 border-amber-200",
     descricao: "IA mais avançada, templates premium exclusivos por nicho, copy autoral e regeneração ilimitada.",
   },
 };
@@ -89,84 +82,84 @@ export default async function Perfil() {
     ? new Date(profile.created_at).toLocaleDateString("pt-BR")
     : "—";
 
+  const inicial = (profile?.full_name || user.email || "U").charAt(0).toUpperCase();
+
   return (
     <main className="eventify-page">
       <BrandHeader />
-      <div className="eventify-section max-w-5xl">
-        <div className="mb-10">
-          <span className="eventify-kicker">✦ Meu perfil</span>
-          <h1 className="eventify-title mt-6 text-5xl">Sua conta</h1>
-          <p className="eventify-muted mt-4 text-lg">
-            Aqui você vê seu plano, seus dados e seu histórico de uso.
+      <div className="editorial-wrap max-w-[1080px] py-12 sm:py-16">
+        {/* Header */}
+        <div className="mb-12">
+          <span className="eventify-kicker">Meu perfil</span>
+          <h1 className="eventify-title mt-6 text-[clamp(40px,5.2vw,68px)]">
+            Sua <em>conta.</em>
+          </h1>
+          <p className="mt-4 max-w-[58ch] text-[16px] leading-[1.6] text-[color:var(--muted)]">
+            Aqui você vê seu plano, seus dados e o histórico de uso da plataforma.
           </p>
         </div>
 
         {/* Cabeçalho do perfil */}
-        <div className="eventify-card grid gap-6 p-8 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-purple-700 text-3xl font-black text-white">
-            {(profile?.full_name || user.email || "U").charAt(0).toUpperCase()}
+        <div className="grid items-center gap-6 rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8 sm:grid-cols-[auto_1fr_auto]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--paper-2)] font-display text-[28px] italic text-[color:var(--gold)]">
+            {inicial}
           </div>
           <div>
-            <p className="text-2xl font-black text-[#090814]">
+            <p className="font-display text-[26px] font-normal tracking-[-0.01em] text-[color:var(--ink)]">
               {profile?.full_name || "(sem nome)"}
             </p>
-            <p className="eventify-muted text-sm">{user.email}</p>
-            <p className="eventify-muted mt-1 text-xs">Cliente desde {cadastradoEm}</p>
+            <p className="mt-1 text-[13.5px] text-[color:var(--muted)]">{user.email}</p>
+            <p className="mt-0.5 text-[12px] text-[color:var(--muted-2)]">Cliente desde {cadastradoEm}</p>
             {profile?.is_admin && (
-              <span className="mt-2 inline-block rounded-full bg-purple-100 px-3 py-0.5 text-xs font-bold text-purple-700">
-                ADMIN
+              <span className="mt-3 inline-block rounded-full border border-[color:var(--gold)] bg-[var(--gold-soft)] px-3 py-0.5 text-[10.5px] uppercase tracking-[0.18em] text-[color:var(--gold-2)]">
+                Admin
               </span>
             )}
           </div>
-          <Link
-            href="/painel"
-            className="eventify-button eventify-button-ghost justify-self-end"
-          >
-            Voltar ao painel
+          <Link href="/painel" className="eventify-button eventify-button-ghost justify-self-end">
+            ← Voltar ao painel
           </Link>
         </div>
 
         {/* Plano atual */}
-        <section className="mt-8">
-          <h2 className="text-xl font-black text-[#090814]">Seu plano</h2>
-          <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
-            <div
-              className={`rounded-2xl border-2 p-6 ${info.cor.replace("text-", "border-").replace("100", "300").split(" ")[2] || ""}`}
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(136, 71, 231, 0.08), rgba(136, 71, 231, 0.02))",
-                borderColor: "#e0d8f5",
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-widest ${info.cor}`}
-                >
+        <section className="mt-12">
+          <h2 className="font-display text-[28px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+            Seu plano
+          </h2>
+          <div className="mt-5 grid gap-5 lg:grid-cols-[2fr_1fr]">
+            <div className="rounded-[14px] border border-[color:var(--gold)] bg-[var(--gold-soft)] p-7">
+              <div className="flex flex-wrap items-baseline gap-4">
+                <span className="rounded-full border border-[color:var(--gold)] bg-[color:var(--surface)] px-3 py-1 text-[10.5px] uppercase tracking-[0.18em] text-[color:var(--gold-2)]">
                   {info.nome}
                 </span>
                 {planoPago && (
-                  <span className="text-2xl font-black text-[#090814]">
+                  <span className="font-display text-[36px] font-light leading-none tracking-[-0.02em] text-[color:var(--ink)]">
                     {planoPago.precoFormatado}
-                    <span className="text-sm font-medium text-[#5f5a72]">/mês</span>
+                    <span className="ml-1 text-[13px] font-normal text-[color:var(--muted)] font-sans">
+                      /mês
+                    </span>
                   </span>
                 )}
               </div>
-              <p className="eventify-muted mt-3 text-sm">{info.descricao}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-                <span className="rounded-md bg-white/80 px-2.5 py-1 font-mono font-semibold text-purple-700 shadow-sm">
+              <p className="mt-4 text-[14px] leading-[1.55] text-[color:var(--ink-2)]">{info.descricao}</p>
+              <div className="mt-5 flex flex-wrap items-center gap-2 text-[11.5px]">
+                <span className="rounded-md border border-[color:var(--hairline-2)] bg-[color:var(--surface)] px-2.5 py-1 font-mono-tight text-[color:var(--ink-2)]">
                   IA: {info.modeloIA}
                 </span>
                 {profile?.subscription_status && (
-                  <span className="rounded-md bg-white/80 px-2.5 py-1 font-mono font-semibold text-[#5f5a72] shadow-sm">
+                  <span className="rounded-md border border-[color:var(--hairline-2)] bg-[color:var(--surface)] px-2.5 py-1 font-mono-tight text-[color:var(--muted)]">
                     Stripe: {profile.subscription_status}
                   </span>
                 )}
               </div>
               {planoPago && (
-                <ul className="mt-5 space-y-2 text-sm text-[#3a3650]">
+                <ul className="mt-5">
                   {planoPago.recursos.map((r) => (
-                    <li key={r} className="flex items-start gap-2">
-                      <span className="text-emerald-500">✓</span>
+                    <li
+                      key={r}
+                      className="flex gap-2.5 border-t border-[color:var(--hairline)] py-2 text-[13.5px] text-[color:var(--ink-2)]"
+                    >
+                      <span className="font-mono-tight text-[color:var(--gold)]">+</span>
                       <span>{r}</span>
                     </li>
                   ))}
@@ -176,16 +169,10 @@ export default async function Perfil() {
 
             <div className="flex flex-col gap-3">
               <ManageSubscriptionButton enabled={Boolean(profile?.stripe_customer_id)} />
-              <Link
-                href="/precos"
-                className="eventify-button eventify-button-primary justify-center"
-              >
+              <Link href="/precos" className="eventify-button eventify-button-primary justify-center">
                 {plano === "premium" ? "Gerenciar plano" : "Fazer upgrade →"}
               </Link>
-              <Link
-                href="/novo-evento"
-                className="eventify-button eventify-button-ghost justify-center"
-              >
+              <Link href="/novo-evento" className="eventify-button eventify-button-ghost justify-center">
                 Criar novo evento
               </Link>
             </div>
@@ -193,35 +180,22 @@ export default async function Perfil() {
         </section>
 
         {/* Estatísticas */}
-        <section className="mt-8">
-          <h2 className="text-xl font-black text-[#090814]">Seu uso</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-[#e8e3f1] bg-white p-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-[#5f5a72]">
-                Eventos criados
-              </p>
-              <p className="mt-3 text-4xl font-black text-[#090814] tabular-nums">
-                {eventos.length}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-[#e8e3f1] bg-white p-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-[#5f5a72]">
-                Sites gerados pela IA
-              </p>
-              <p className="mt-3 text-4xl font-black text-[#090814] tabular-nums">
-                {sitesGerados}
-              </p>
-              <p className="eventify-muted mt-1 text-xs">{sitesNoMes} neste mês</p>
-            </div>
-            <div className="rounded-2xl border border-[#e8e3f1] bg-white p-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-[#5f5a72]">
-                Custo IA acumulado
-              </p>
-              <p className="mt-3 text-4xl font-black text-[#090814] tabular-nums">
-                {formatUSD(totalCustoUsd)}
-              </p>
-              <p className="eventify-muted mt-1 text-xs">Pago pela plataforma</p>
-            </div>
+        <section className="mt-12">
+          <h2 className="font-display text-[28px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+            Seu uso
+          </h2>
+          <div className="mt-5 grid grid-cols-1 overflow-hidden rounded-[14px] border border-[color:var(--hairline)] sm:grid-cols-3 sm:gap-px sm:bg-[color:var(--hairline)]">
+            <StatCard label="Eventos criados" value={eventos.length} />
+            <StatCard
+              label="Sites gerados pela IA"
+              value={sitesGerados}
+              hint={`${sitesNoMes} neste mês`}
+            />
+            <StatCard
+              label="Custo IA acumulado"
+              value={formatUSD(totalCustoUsd)}
+              hint="Pago pela plataforma"
+            />
           </div>
         </section>
 
@@ -229,42 +203,51 @@ export default async function Perfil() {
         <PaymentHistory invoices={invoices} />
 
         {/* Eventos recentes */}
-        <section className="mt-8">
-          <h2 className="text-xl font-black text-[#090814]">Seus eventos</h2>
+        <section className="mt-12">
+          <h2 className="font-display text-[28px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+            Seus eventos
+          </h2>
           {eventos.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-[#e8e3f1] bg-[#faf9ff] p-10 text-center">
-              <p className="eventify-muted">Você ainda não criou nenhum evento.</p>
-              <Link
-                href="/novo-evento"
-                className="eventify-button eventify-button-primary mt-4 inline-flex"
-              >
-                Criar meu primeiro evento →
+            <div className="mt-5 rounded-[14px] border border-dashed border-[color:var(--hairline-2)] bg-[color:var(--paper-2)] p-10 text-center">
+              <p className="text-[14px] text-[color:var(--muted)]">Você ainda não criou nenhum evento.</p>
+              <Link href="/novo-evento" className="eventify-button eventify-button-primary mt-5 inline-flex">
+                Criar meu primeiro evento <span aria-hidden>→</span>
               </Link>
             </div>
           ) : (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-[#e8e3f1] bg-white">
-              <table className="w-full text-sm">
-                <thead className="bg-[#faf9ff] text-xs uppercase text-[#5f5a72]">
+            <div className="mt-5 overflow-hidden rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)]">
+              <table className="w-full text-[14px]">
+                <thead className="bg-[color:var(--paper-2)]">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold">Nome</th>
-                    <th className="px-4 py-3 text-left font-semibold">Tipo</th>
-                    <th className="px-4 py-3 text-left font-semibold">Data</th>
-                    <th className="px-4 py-3 text-right font-semibold">Ação</th>
+                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)] font-medium">
+                      Nome
+                    </th>
+                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)] font-medium">
+                      Tipo
+                    </th>
+                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)] font-medium">
+                      Data
+                    </th>
+                    <th className="px-5 py-3 text-right text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)] font-medium">
+                      Ação
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {eventos.slice(0, 10).map((e) => (
-                    <tr key={e.id} className="border-t border-[#e8e3f1]">
-                      <td className="px-4 py-3 font-bold text-[#090814]">{e.nome}</td>
-                      <td className="px-4 py-3 text-[#5f5a72]">{e.tipo}</td>
-                      <td className="px-4 py-3 text-[#5f5a72]">
+                    <tr key={e.id} className="border-t border-[color:var(--hairline)]">
+                      <td className="px-5 py-3.5 font-display text-[17px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+                        {e.nome}
+                      </td>
+                      <td className="px-5 py-3.5 text-[color:var(--muted)]">{e.tipo}</td>
+                      <td className="px-5 py-3.5 text-[color:var(--muted)] font-mono-tight">
                         {new Date(e.data + "T00:00:00").toLocaleDateString("pt-BR")}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-5 py-3.5 text-right">
                         <Link
                           href={`/cliente/${e.slug}`}
                           target="_blank"
-                          className="text-xs font-bold text-purple-700 hover:underline"
+                          className="text-[13px] text-[color:var(--ink)] underline decoration-[color:var(--gold)] underline-offset-4 hover:decoration-[color:var(--ink)]"
                         >
                           Abrir →
                         </Link>
@@ -274,9 +257,12 @@ export default async function Perfil() {
                 </tbody>
               </table>
               {eventos.length > 10 && (
-                <div className="border-t border-[#e8e3f1] bg-[#faf9ff] px-4 py-3 text-center text-xs text-[#5f5a72]">
+                <div className="border-t border-[color:var(--hairline)] bg-[color:var(--paper-2)] px-5 py-3 text-center text-[12.5px] text-[color:var(--muted)]">
                   + {eventos.length - 10} eventos. Veja todos no{" "}
-                  <Link href="/painel" className="font-bold text-purple-700 hover:underline">
+                  <Link
+                    href="/painel"
+                    className="text-[color:var(--ink)] underline decoration-[color:var(--gold)] underline-offset-4"
+                  >
                     painel
                   </Link>
                   .
@@ -287,5 +273,17 @@ export default async function Perfil() {
         </section>
       </div>
     </main>
+  );
+}
+
+function StatCard({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
+  return (
+    <div className="bg-[color:var(--surface)] p-7">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{label}</p>
+      <p className="mt-3 font-display text-[42px] font-light leading-none tracking-[-0.02em] tabular-nums text-[color:var(--ink)]">
+        {value}
+      </p>
+      {hint && <p className="mt-2 text-[12.5px] text-[color:var(--muted)]">{hint}</p>}
+    </div>
   );
 }

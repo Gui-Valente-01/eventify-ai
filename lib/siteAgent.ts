@@ -24,6 +24,7 @@ export type EventoDados = {
     descricao?: string;
     detalhes?: Record<string, string>;
     planoSelecionado?: string;
+    templateId?: string;
   };
   convidados?: string[];
   siteGerado?: GeneratedSite;

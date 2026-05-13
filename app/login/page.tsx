@@ -23,7 +23,9 @@ function LoginInner() {
     setErro(null);
 
     if (!isSupabaseConfigured) {
-      setErro("Supabase não configurado. Adicione as variáveis NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.local.");
+      setErro(
+        "Supabase não configurado. Adicione as variáveis NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.local."
+      );
       return;
     }
 
@@ -44,27 +46,34 @@ function LoginInner() {
   }
 
   return (
-    <main className="eventify-page gradient-mesh">
+    <main className="eventify-page">
       <BrandHeader actions={[{ href: "/cadastro", label: "Criar conta", variant: "primary" }]} />
-      <section className="eventify-section flex justify-center">
-        <div className="eventify-card glass w-full max-w-md p-10 ring-glow animate-fade-up">
-          <span className="eventify-kicker">✦ Entrar</span>
-          <h1 className="eventify-title mt-5 text-4xl">Bem-vindo de volta</h1>
-          <p className="eventify-muted mt-3">Acesse seu painel de eventos.</p>
+      <section className="editorial-narrow py-24 sm:py-32">
+        <span className="eventify-kicker">Entrar</span>
+        <h1 className="eventify-title mt-6 text-[clamp(40px,5vw,64px)]">
+          Bem-vindo de <em>volta.</em>
+        </h1>
+        <p className="mt-4 text-[16px] text-[color:var(--muted)]">
+          Acesse seu painel de eventos.
+        </p>
 
-          <form onSubmit={entrar} className="mt-8 grid gap-4">
+        <form onSubmit={entrar} className="mt-12 grid gap-7">
+          <Field label="E-mail">
             <input
               type="email"
-              placeholder="E-mail"
+              placeholder="seu@email.com"
               className="eventify-input"
               value={email}
               autoComplete="email"
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+          </Field>
+
+          <Field label="Senha">
             <input
               type="password"
-              placeholder="Senha"
+              placeholder="••••••••"
               className="eventify-input"
               value={senha}
               autoComplete="current-password"
@@ -72,42 +81,71 @@ function LoginInner() {
               required
               minLength={6}
             />
+          </Field>
 
-            {erro && (
-              <p className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-600">
-                {erro}
-              </p>
+          {erro && (
+            <p className="border-y border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] px-4 py-3 text-[13.5px] text-[color:var(--rose,#A85462)]">
+              {erro}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={carregando}
+            className="eventify-button eventify-button-primary mt-2 min-h-[3rem] justify-center disabled:opacity-70"
+          >
+            {carregando ? (
+              <>
+                <Spinner className="h-4 w-4" /> Entrando...
+              </>
+            ) : (
+              <>Entrar <span aria-hidden>→</span></>
             )}
+          </button>
+        </form>
 
-            <button
-              type="submit"
-              disabled={carregando}
-              className="eventify-button eventify-button-primary min-h-12 justify-center disabled:opacity-70"
+        <div className="mt-10 flex flex-col items-center gap-3 border-t border-[color:var(--hairline)] pt-8 text-center text-[14px]">
+          <Link
+            href="/recuperar-senha"
+            className="text-[color:var(--ink)] underline decoration-[color:var(--hairline-2)] underline-offset-4 transition-colors hover:decoration-[color:var(--ink)]"
+          >
+            Esqueci minha senha
+          </Link>
+          <span className="text-[color:var(--muted)]">
+            Ainda não tem conta?{" "}
+            <Link
+              href="/cadastro"
+              className="text-[color:var(--ink)] underline decoration-[color:var(--gold)] underline-offset-4 transition-colors hover:decoration-[color:var(--ink)]"
             >
-              {carregando ? <><Spinner className="h-4 w-4" /> Entrando...</> : <>Entrar →</>}
-            </button>
-          </form>
-
-          <div className="eventify-muted mt-6 flex flex-col items-center gap-2 text-center text-sm">
-            <Link href="/recuperar-senha" className="font-bold text-[#8847e7]">
-              Esqueci minha senha
+              Criar agora →
             </Link>
-            <span>
-              Ainda não tem conta?{" "}
-              <Link href="/cadastro" className="font-bold text-[#8847e7]">
-                Criar agora
-              </Link>
-            </span>
-          </div>
+          </span>
         </div>
       </section>
     </main>
   );
 }
 
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-[11px] uppercase tracking-[0.18em] text-[color:var(--ink-2)]">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="eventify-page"><div className="eventify-section text-center eventify-muted">Carregando...</div></main>}>
+    <Suspense
+      fallback={
+        <main className="eventify-page">
+          <div className="eventify-section text-center text-[color:var(--muted)]">Carregando...</div>
+        </main>
+      }
+    >
       <LoginInner />
     </Suspense>
   );

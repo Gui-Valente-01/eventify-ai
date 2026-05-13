@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 
 /**
- * Boundary de último recurso — captura erros que aconteceram no
- * RootLayout antes do `error.tsx` montar. Precisa renderizar o html/body.
+ * Boundary de último recurso. Precisa renderizar html/body inteiros.
+ * Sem next/font aqui — pode ser invocado antes do layout carregar.
  */
 export default function GlobalError({
   error,
@@ -21,63 +21,65 @@ export default function GlobalError({
     <html lang="pt-BR">
       <body
         style={{
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
           minHeight: "100vh",
           margin: 0,
-          background: "#fff",
-          color: "#0a0814",
+          background: "#FAFAF7",
+          color: "#0A0A0A",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           padding: "2rem",
         }}
       >
-        <div style={{ maxWidth: 480, textAlign: "center" }}>
+        <div style={{ maxWidth: 520, textAlign: "center" }}>
           <p
             style={{
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.2em",
+              fontSize: "0.72rem",
+              fontWeight: 500,
+              letterSpacing: "0.22em",
               textTransform: "uppercase",
-              color: "#7c3aed",
+              color: "#B8935A",
             }}
           >
             Erro crítico
           </p>
           <h1
             style={{
-              marginTop: "1rem",
-              fontSize: "2.25rem",
-              fontWeight: 900,
-              letterSpacing: "-0.03em",
-              lineHeight: 1.1,
+              marginTop: "1.25rem",
+              fontSize: "2.4rem",
+              fontWeight: 300,
+              letterSpacing: "-0.02em",
+              lineHeight: 1.02,
+              fontFamily: "ui-serif, Georgia, serif",
             }}
           >
-            Algo quebrou no Eventify AI
+            Algo quebrou no <em style={{ color: "#B8935A" }}>Eventify.</em>
           </h1>
           <p
             style={{
-              marginTop: "1.5rem",
+              marginTop: "1.4rem",
               fontSize: "1rem",
               lineHeight: 1.6,
-              color: "rgba(10,8,20,0.6)",
+              color: "#6B6B6B",
+              maxWidth: "44ch",
+              margin: "1.4rem auto 0",
             }}
           >
-            Tivemos uma falha grave. A equipe foi notificada. Tente recarregar a
-            página.
+            Tivemos uma falha grave. A equipe foi notificada. Tente recarregar a página.
           </p>
           <button
             type="button"
             onClick={reset}
             style={{
               marginTop: "2rem",
-              height: 56,
-              padding: "0 2rem",
+              height: 52,
+              padding: "0 1.75rem",
               borderRadius: 9999,
-              background: "#0a0814",
+              background: "#0A0A0A",
               color: "#fff",
-              fontSize: "1rem",
-              fontWeight: 700,
+              fontSize: "0.95rem",
+              fontWeight: 500,
               border: "none",
               cursor: "pointer",
             }}

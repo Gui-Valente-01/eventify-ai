@@ -12,10 +12,6 @@ type Props = {
   variant?: "light" | "dark";
 };
 
-/**
- * Tela de erro consistente. Usar em error boundaries e estados de
- * falha previsível (rede, API, validação).
- */
 export default function ErrorState({
   title = "Algo deu errado",
   description = "Tivemos um problema ao carregar essa parte. Tente recarregar — se persistir, fale com a gente.",
@@ -28,36 +24,38 @@ export default function ErrorState({
   const isDark = variant === "dark";
   return (
     <div
-      className={`mx-auto max-w-xl rounded-2xl border p-10 text-center ${
+      className={`mx-auto max-w-xl rounded-[14px] border p-10 text-center ${
         isDark
-          ? "border-white/10 bg-white/[0.02]"
-          : "border-rose-200 bg-rose-50/40"
+          ? "border-white/10 bg-white/[0.02] text-white"
+          : "border-[color:var(--hairline)] bg-[color:var(--surface)]"
       }`}
     >
       <div
-        className={`mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl text-3xl ${
-          isDark ? "bg-rose-500/10" : "bg-rose-100"
+        className={`mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full border font-display italic ${
+          isDark
+            ? "border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.12)] text-[color:var(--rose,#A85462)]"
+            : "border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] text-[color:var(--rose,#A85462)]"
         }`}
       >
-        ⚠️
+        !
       </div>
       <h2
-        className={`mt-5 text-2xl font-black ${
-          isDark ? "text-white" : "text-[#090814]"
+        className={`mt-6 font-display text-[32px] font-light tracking-[-0.01em] ${
+          isDark ? "text-white" : "text-[color:var(--ink)]"
         }`}
       >
         {title}
       </h2>
-      <p className={`mt-3 text-sm ${isDark ? "text-white/60" : "text-[#5f5a72]"}`}>
+      <p className={`mt-3 text-[14.5px] leading-[1.55] ${isDark ? "text-white/65" : "text-[color:var(--muted)]"}`}>
         {description}
       </p>
 
       {errorMessage && (
         <div
-          className={`mt-5 overflow-x-auto rounded-xl border p-3 text-left text-xs font-mono ${
+          className={`mt-5 overflow-x-auto rounded-[8px] border p-3 text-left font-mono-tight text-[12px] ${
             isDark
-              ? "border-white/10 bg-black/40 text-rose-300"
-              : "border-rose-200 bg-white text-rose-700"
+              ? "border-white/10 bg-black/40 text-[color:var(--rose,#A85462)]"
+              : "border-[color:var(--hairline)] bg-[color:var(--paper-2)] text-[color:var(--rose,#A85462)]"
           }`}
         >
           {errorCode && <span className="opacity-60">[{errorCode}] </span>}
@@ -65,14 +63,14 @@ export default function ErrorState({
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+      <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
         {onRetry && (
           <button
             type="button"
             onClick={onRetry}
             className={
               isDark
-                ? "inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-bold text-black hover:bg-white/90"
+                ? "inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-[13.5px] font-medium text-[color:var(--ink)] transition-transform hover:-translate-y-px"
                 : "eventify-button eventify-button-primary"
             }
           >
@@ -84,11 +82,11 @@ export default function ErrorState({
             href="/"
             className={
               isDark
-                ? "inline-flex h-11 items-center justify-center rounded-full border border-white/15 px-5 text-sm font-bold text-white hover:bg-white/5"
+                ? "inline-flex h-11 items-center justify-center rounded-full border border-white/15 px-5 text-[13.5px] text-white transition-colors hover:bg-white/5"
                 : "eventify-button eventify-button-ghost"
             }
           >
-            Voltar para o início
+            Voltar pro início
           </Link>
         )}
       </div>

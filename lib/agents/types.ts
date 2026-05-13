@@ -33,6 +33,7 @@ export type AgentEvento = {
     descricao?: string;
     detalhes?: Record<string, string>;
     planoSelecionado?: string;
+    templateId?: string;
   };
   convidados?: string[];
 };

@@ -17,7 +17,7 @@ export function BarChart({
             title={`${d.label}: ${formatValue ? formatValue(d.value) : d.value}`}
           >
             <div
-              className="w-full rounded-t bg-gradient-to-t from-purple-600 to-purple-400 transition-all group-hover:from-purple-500 group-hover:to-purple-300"
+              className="w-full rounded-sm bg-[color:var(--gold)]/85 transition-all group-hover:bg-[color:var(--gold)]"
               style={{ height: `${h}%` }}
             />
           </div>

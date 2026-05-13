@@ -26,7 +26,7 @@ export default function Evento() {
     return (
       <main className="eventify-page">
         <BrandHeader actions={[{ href: "/painel", label: "Entrar", variant: "ghost" }]} />
-        <div className="eventify-section text-center eventify-muted">Carregando evento...</div>
+        <div className="editorial-wrap py-32 text-center text-[color:var(--muted)]">Carregando evento...</div>
       </main>
     );
   }
@@ -38,14 +38,15 @@ export default function Evento() {
     return (
       <main className="eventify-page">
         <BrandHeader actions={[{ href: "/painel", label: "Entrar", variant: "ghost" }]} />
-        <div className="eventify-section">
-          <div className="eventify-card mx-auto max-w-4xl p-10 text-center">
-            <p className="text-xl font-black text-[#090814]">Evento não encontrado.</p>
-            <Link href="/painel" className="eventify-button eventify-button-ghost mt-6">
-              Voltar ao painel
-            </Link>
-          </div>
-        </div>
+        <section className="editorial-narrow py-24 text-center">
+          <span className="eventify-kicker">Página do evento</span>
+          <h1 className="eventify-title mt-6 text-[clamp(40px,5vw,64px)]">
+            Evento <em>não encontrado.</em>
+          </h1>
+          <Link href="/painel" className="eventify-button eventify-button-ghost mt-8">
+            ← Voltar ao painel
+          </Link>
+        </section>
       </main>
     );
   }
@@ -98,126 +99,191 @@ export default function Evento() {
   }
 
   const enderecoCompleto = evento.endereco
-    ? [evento.endereco.rua, evento.endereco.numero, evento.endereco.cidade, evento.endereco.estado].filter(Boolean).join(", ")
+    ? [evento.endereco.rua, evento.endereco.numero, evento.endereco.cidade, evento.endereco.estado]
+        .filter(Boolean)
+        .join(", ")
     : "";
-  const mapaURL = enderecoCompleto ? `https://www.google.com/maps?q=${encodeURIComponent(enderecoCompleto)}&output=embed` : "";
+  const mapaURL = enderecoCompleto
+    ? `https://www.google.com/maps?q=${encodeURIComponent(enderecoCompleto)}&output=embed`
+    : "";
   const convidados = evento.convidados || [];
 
   return (
     <main className="eventify-page">
       <BrandHeader actions={[{ href: "/painel", label: "Entrar", variant: "ghost" }]} />
-      <div className="eventify-section">
-        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="editorial-wrap py-12 sm:py-16">
+        <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <span className="eventify-kicker">✦ Página do evento</span>
-            <h1 className="eventify-title mt-6 text-5xl">{evento.nome}</h1>
+            <span className="eventify-kicker">Página do evento</span>
+            <h1 className="eventify-title mt-6 text-[clamp(40px,5.4vw,72px)]">{evento.nome}</h1>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/painel" className="eventify-button eventify-button-ghost">Voltar ao painel</Link>
-            <Link href={`/cliente/${slug}`} className="eventify-button eventify-button-primary">Página do cliente</Link>
-            <Link href={`/promocional/${slug}`} className="eventify-button eventify-button-ghost">Ver site promocional</Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/painel" className="eventify-button eventify-button-ghost">
+              ← Painel
+            </Link>
+            <Link href={`/cliente/${slug}`} className="eventify-button eventify-button-primary">
+              Página do cliente
+            </Link>
+            <Link href={`/promocional/${slug}`} className="eventify-button eventify-button-ghost">
+              Site promocional
+            </Link>
           </div>
         </div>
-        <div className="eventify-card overflow-hidden p-1">
-          <div className="rounded-[1.25rem] bg-white p-8 md:p-10">
-            <div className="grid gap-8 lg:grid-cols-[1.4fr_0.9fr]">
-              <section className="space-y-6">
-                <div className="overflow-hidden rounded-2xl bg-[#f1eef8] shadow-sm">
-                  {evento.imagem ? (
-                    <img src={evento.imagem} alt={evento.nome} className="h-72 w-full object-cover" />
-                  ) : (
-                    <div className="eventify-muted flex h-72 items-center justify-center bg-[#f1eef8]">
-                      <span className="text-lg">Sem imagem disponível</span>
-                    </div>
-                  )}
-                </div>
-                <div className="rounded-2xl border border-[#e8e3f1] bg-[#faf9ff] p-6">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <span className="inline-flex rounded-full bg-[#f0ddff] px-4 py-2 text-sm font-bold text-[#8847e7]">{evento.tipo}</span>
-                    <span className="eventify-muted text-sm">{convidados.length} convidados</span>
-                  </div>
-                  <div className="eventify-muted mt-6 space-y-3">
-                    <p className="text-lg"><strong>Data:</strong> {evento.data}</p>
-                    {enderecoCompleto && <p className="text-lg"><strong>Endereço:</strong> {enderecoCompleto}</p>}
-                  </div>
-                  <div className="mt-6 border-t border-[#e8e3f1] pt-5">
-                    <p className="eventify-muted text-sm font-bold uppercase tracking-[0.22em]">Compartilhar com convidados</p>
-                    <ShareButtons
-                      url={typeof window !== "undefined" ? `${window.location.origin}/cliente/${slug}` : ""}
-                      titulo={`Convite: ${evento.nome}`}
-                      className="mt-4"
-                    />
-                  </div>
-                </div>
-                {mapaURL && (
-                  <div className="overflow-hidden rounded-2xl border border-[#e8e3f1] shadow-sm">
-                    <iframe src={mapaURL} width="100%" height="320" style={{ border: 0 }} loading="lazy" />
+
+        <div className="overflow-hidden rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)]">
+          <div className="grid gap-10 p-8 lg:grid-cols-[1.4fr_0.9fr] lg:p-12">
+            {/* COLUNA ESQUERDA */}
+            <section className="space-y-6">
+              <div className="overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper-2)]">
+                {evento.imagem ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={evento.imagem} alt={evento.nome} className="h-72 w-full object-cover" />
+                ) : (
+                  <div className="flex h-72 items-center justify-center font-display text-[16px] italic text-[color:var(--muted-2)]">
+                    Sem imagem disponível
                   </div>
                 )}
-              </section>
-              <aside className="space-y-6 rounded-2xl border border-[#e8e3f1] bg-[#faf9ff] p-6 shadow-sm">
-                <div>
-                  <h2 className="text-2xl font-black text-[#090814]">Confirmar presença</h2>
-                  <p className="eventify-muted mt-2 text-sm">Digite seu nome para adicionar à lista de convidados.</p>
+              </div>
+
+              <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <span className="rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--surface)] px-3.5 py-1.5 text-[11.5px] uppercase tracking-[0.16em] text-[color:var(--ink-2)]">
+                    {evento.tipo}
+                  </span>
+                  <span className="text-[13px] text-[color:var(--muted)] font-mono-tight">
+                    {convidados.length} {convidados.length === 1 ? "convidado" : "convidados"}
+                  </span>
                 </div>
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Digite seu nome"
-                    value={nomeConvidado}
-                    onChange={(e) => setNomeConvidado(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        adicionarPresenca();
-                      }
-                    }}
-                    className="eventify-input"
-                  />
-                  <button onClick={adicionarPresenca} className="eventify-button eventify-button-primary w-full">
-                    Confirmar presença
-                  </button>
-                  {mensagem && (
-                    <p className={`text-sm font-semibold ${mensagem.tipo === "erro" ? "text-rose-500" : "text-emerald-600"}`}>
-                      {mensagem.texto}
+                <dl className="mt-6 space-y-2.5 text-[15px] text-[color:var(--ink-2)]">
+                  <p>
+                    <span className="mr-2 text-[color:var(--gold)]">●</span>
+                    <strong className="font-medium">Data:</strong> {evento.data}
+                  </p>
+                  {enderecoCompleto && (
+                    <p>
+                      <span className="mr-2 text-[color:var(--gold)]">●</span>
+                      <strong className="font-medium">Endereço:</strong> {enderecoCompleto}
                     </p>
                   )}
+                </dl>
+                <div className="mt-6 border-t border-[color:var(--hairline)] pt-5">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--gold)]">
+                    Compartilhar com convidados
+                  </p>
+                  <ShareButtons
+                    url={typeof window !== "undefined" ? `${window.location.origin}/cliente/${slug}` : ""}
+                    titulo={`Convite: ${evento.nome}`}
+                    className="mt-4"
+                  />
                 </div>
-                <div className="rounded-2xl border border-[#e8e3f1] bg-white p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="eventify-muted text-sm font-bold uppercase tracking-[0.22em]">Convidados</p>
-                    {convidados.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={exportarCSV}
-                        className="rounded-lg border border-[#e8e3f1] bg-[#faf9ff] px-3 py-1 text-xs font-bold text-[#8847e7] transition hover:bg-[#f0ddff]"
-                      >
-                        ⬇ CSV
-                      </button>
-                    )}
-                  </div>
-                  {convidados.length > 0 ? (
-                    <ul className="eventify-muted mt-4 space-y-3">
-                      {convidados.map((nome, index) => (
-                        <li key={`${nome}-${index}`} className="flex items-center justify-between rounded-2xl border border-[#e8e3f1] bg-[#faf9ff] px-4 py-3">
-                          <span>{nome}</span>
-                          {confirmandoRemocao === index ? (
-                            <span className="flex items-center gap-2">
-                              <button onClick={() => removerPresenca(index)} className="text-sm font-bold text-rose-600">Confirmar</button>
-                              <button onClick={() => setConfirmandoRemocao(null)} className="text-sm font-semibold text-[#5f5a72]">Cancelar</button>
-                            </span>
-                          ) : (
-                            <button onClick={() => setConfirmandoRemocao(index)} className="text-sm font-semibold text-rose-500">Remover</button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="eventify-muted mt-4 text-sm">Nenhum convidado confirmado ainda.</p>
+              </div>
+
+              {mapaURL && (
+                <div className="overflow-hidden rounded-[10px] border border-[color:var(--hairline)]">
+                  <iframe src={mapaURL} width="100%" height="320" style={{ border: 0 }} loading="lazy" />
+                </div>
+              )}
+            </section>
+
+            {/* COLUNA DIREITA */}
+            <aside className="space-y-6 rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
+              <div>
+                <h2 className="font-display text-[28px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+                  Confirmar presença
+                </h2>
+                <p className="mt-2 text-[13.5px] text-[color:var(--muted)]">
+                  Digite seu nome para adicionar à lista de convidados.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={nomeConvidado}
+                  onChange={(e) => setNomeConvidado(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      adicionarPresenca();
+                    }
+                  }}
+                  className="eventify-input"
+                />
+                <button
+                  onClick={adicionarPresenca}
+                  className="eventify-button eventify-button-primary w-full justify-center"
+                >
+                  Confirmar presença
+                </button>
+                {mensagem && (
+                  <p
+                    className={`border-y px-3 py-2 text-[13px] ${
+                      mensagem.tipo === "erro"
+                        ? "border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] text-[color:var(--rose,#A85462)]"
+                        : "border-[color:var(--green,#5B7A4F)] bg-[rgba(91,122,79,0.06)] text-[color:var(--green,#5B7A4F)]"
+                    }`}
+                  >
+                    {mensagem.texto}
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10.5px] uppercase tracking-[0.18em] text-[color:var(--gold)]">
+                    Convidados
+                  </p>
+                  {convidados.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={exportarCSV}
+                      className="rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--paper)] px-3 py-1 text-[11px] text-[color:var(--ink)] transition hover:border-[color:var(--ink)]"
+                    >
+                      ↓ CSV
+                    </button>
                   )}
                 </div>
-              </aside>
-            </div>
+                {convidados.length > 0 ? (
+                  <ul className="mt-4 space-y-2">
+                    {convidados.map((nome, index) => (
+                      <li
+                        key={`${nome}-${index}`}
+                        className="flex items-center justify-between rounded-[8px] border border-[color:var(--hairline)] bg-[color:var(--paper-2)] px-3.5 py-2.5 text-[14px] text-[color:var(--ink-2)]"
+                      >
+                        <span>{nome}</span>
+                        {confirmandoRemocao === index ? (
+                          <span className="flex items-center gap-3 text-[12.5px]">
+                            <button
+                              onClick={() => removerPresenca(index)}
+                              className="text-[color:var(--rose,#A85462)] underline decoration-current underline-offset-2"
+                            >
+                              Confirmar
+                            </button>
+                            <button
+                              onClick={() => setConfirmandoRemocao(null)}
+                              className="text-[color:var(--muted)]"
+                            >
+                              Cancelar
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmandoRemocao(index)}
+                            className="text-[12.5px] text-[color:var(--rose,#A85462)] underline decoration-transparent underline-offset-2 hover:decoration-current"
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-4 text-[13px] text-[color:var(--muted)]">
+                    Nenhum convidado confirmado ainda.
+                  </p>
+                )}
+              </div>
+            </aside>
           </div>
         </div>
       </div>

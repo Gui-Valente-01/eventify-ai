@@ -40,7 +40,7 @@ export default function EditarEvento() {
   const [estilo, setEstilo] = useState("");
   const [clima, setClima] = useState("");
   const [publico, setPublico] = useState("");
-  const [corPrincipal, setCorPrincipal] = useState("#8847e7");
+  const [corPrincipal, setCorPrincipal] = useState("#B8935A");
   const [descricao, setDescricao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erroCep, setErroCep] = useState("");
@@ -74,7 +74,7 @@ export default function EditarEvento() {
       setEstilo(evento.briefing.estilo || "");
       setClima(evento.briefing.clima || "");
       setPublico(evento.briefing.publico || "");
-      setCorPrincipal(evento.briefing.corPrincipal || "#8847e7");
+      setCorPrincipal(evento.briefing.corPrincipal || "#B8935A");
       setDescricao(evento.briefing.descricao || "");
     }
   }, [isLoading, slug, eventos, encontrarIndexPorSlug]);
@@ -187,7 +187,7 @@ export default function EditarEvento() {
     return (
       <main className="eventify-page">
         <BrandHeader />
-        <div className="eventify-section text-center eventify-muted">Carregando evento...</div>
+        <div className="editorial-wrap py-32 text-center text-[color:var(--muted)]">Carregando evento...</div>
       </main>
     );
   }
@@ -196,15 +196,17 @@ export default function EditarEvento() {
     return (
       <main className="eventify-page">
         <BrandHeader />
-        <section className="eventify-section flex justify-center">
-          <div className="eventify-card max-w-xl p-10 text-center">
-            <span className="eventify-kicker">Editar evento</span>
-            <h1 className="eventify-title mt-5 text-4xl">Evento não encontrado</h1>
-            <p className="eventify-muted mt-3">Verifique se o link está correto ou volte ao painel.</p>
-            <Link href="/painel" className="eventify-button eventify-button-ghost mt-7">
-              Voltar ao painel
-            </Link>
-          </div>
+        <section className="editorial-narrow py-24 text-center">
+          <span className="eventify-kicker">Editar evento</span>
+          <h1 className="eventify-title mt-6 text-[clamp(40px,5vw,64px)]">
+            Evento <em>não encontrado.</em>
+          </h1>
+          <p className="mt-4 text-[16px] text-[color:var(--muted)]">
+            Verifique se o link está correto ou volte ao painel.
+          </p>
+          <Link href="/painel" className="eventify-button eventify-button-ghost mt-10">
+            ← Voltar ao painel
+          </Link>
         </section>
       </main>
     );
@@ -215,141 +217,299 @@ export default function EditarEvento() {
   return (
     <main className="eventify-page">
       <BrandHeader />
-      <div className="eventify-section max-w-5xl">
-        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="editorial-wrap max-w-[1080px] py-16">
+        <div className="mb-12 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <span className="eventify-kicker">✦ Editar evento</span>
-            <h1 className="eventify-title mt-6 text-5xl">Atualize os detalhes</h1>
-            <p className="eventify-muted mt-4 text-lg">Ajuste o briefing e mantenha a página do cliente atualizada.</p>
+            <span className="eventify-kicker">Editar evento</span>
+            <h1 className="eventify-title mt-6 text-[clamp(40px,5.2vw,68px)]">
+              Atualize os <em>detalhes.</em>
+            </h1>
+            <p className="mt-4 max-w-[58ch] text-[16px] leading-[1.6] text-[color:var(--muted)]">
+              Ajuste o briefing e mantenha a página do cliente atualizada. A IA regenera o site automaticamente.
+            </p>
           </div>
-          <Link href="/painel" className="eventify-button eventify-button-ghost">
-            Voltar ao painel
+          <Link href="/painel" className="eventify-button eventify-button-ghost shrink-0">
+            ← Voltar ao painel
           </Link>
         </div>
 
-        <form onSubmit={salvarEdicao} className="eventify-card grid gap-8 p-8" noValidate>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <input type="text" placeholder="Nome do evento" className="eventify-input" value={nome} onChange={(e) => setNome(e.target.value)} required />
-            <input type="date" className="eventify-input" value={data} min={dataMinimaHoje()} onChange={(e) => setData(e.target.value)} required />
-          </div>
+        <form
+          onSubmit={salvarEdicao}
+          className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)]"
+          noValidate
+        >
+          <div className="space-y-10 px-8 py-10 sm:px-12 sm:py-12">
+            {/* Dados básicos */}
+            <section className="grid gap-8">
+              <SectionTitle title="Dados básicos" subtitle="Nome, data, tipo e imagem do evento." />
+              <div className="grid gap-8 sm:grid-cols-2">
+                <Field label="Nome do evento">
+                  <input
+                    type="text"
+                    placeholder="Marina &amp; Rafael"
+                    className="eventify-input"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    required
+                  />
+                </Field>
+                <Field label="Data">
+                  <input
+                    type="date"
+                    className="eventify-input"
+                    value={data}
+                    min={dataMinimaHoje()}
+                    onChange={(e) => setData(e.target.value)}
+                    required
+                  />
+                </Field>
+              </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <select className="eventify-input" value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-              <option value="">Selecione o tipo</option>
-              {TIPOS_EVENTO.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            <div className="rounded-2xl border border-[#e8e3f1] bg-[#faf9ff] p-4">
-              <p className="text-sm font-black text-[#090814]">Imagem do evento</p>
-              <p className="eventify-muted mt-2 text-sm">Atualize a imagem ou mantenha a atual.</p>
-              <input type="file" accept="image/jpeg,image/png,image/webp" className="mt-4 w-full text-sm text-[#5f5a72]" onChange={selecionarImagem} />
-            </div>
-          </div>
+              <div className="grid gap-8 sm:grid-cols-2">
+                <Field label="Tipo">
+                  <select
+                    className="eventify-input"
+                    value={tipo}
+                    onChange={(e) => setTipo(e.target.value)}
+                    required
+                  >
+                    <option value="">Selecione</option>
+                    {TIPOS_EVENTO.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Imagem · opcional">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="mt-1 text-[13px] text-[color:var(--muted)] file:mr-4 file:rounded-full file:border file:border-[color:var(--hairline-2)] file:bg-[color:var(--paper-2)] file:px-4 file:py-2 file:text-[13px] file:text-[color:var(--ink)] hover:file:bg-[color:var(--paper-3)]"
+                    onChange={selecionarImagem}
+                  />
+                </Field>
+              </div>
 
-          <PlanSelector
-            value={normalizePlanId(selectedPlan)}
-            onChange={setSelectedPlan}
-            disabled={salvando}
-            title="Plano desejado pelo cliente"
-            description="A IA regenera o site com base no plano escolhido. O resultado muda em densidade, visual e recursos."
-          />
+              {previewExibido && (
+                <div className="overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper-2)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewExibido} alt="Preview do evento" className="h-56 w-full object-cover" />
+                </div>
+              )}
+            </section>
 
-          {previewExibido && (
-            <div className="overflow-hidden rounded-2xl border border-[#e8e3f1] bg-[#f1eef8] shadow-lg">
-              <img src={previewExibido} alt="Preview do evento" className="h-56 w-full object-cover" />
-            </div>
-          )}
+            <hr className="border-[color:var(--hairline)]" />
 
-          <div className="space-y-4 rounded-2xl border border-[#e8e3f1] bg-[#faf9ff] p-6">
-            <div>
-              <h2 className="text-xl font-black text-[#090814]">Endereço</h2>
-              <p className="eventify-muted mt-2 text-sm">Use o CEP para preencher automaticamente os dados do endereço.</p>
-            </div>
+            {/* Plano */}
+            <PlanSelector
+              value={normalizePlanId(selectedPlan)}
+              onChange={setSelectedPlan}
+              disabled={salvando}
+              title="Plano desejado pelo cliente"
+              description="A IA regenera o site com base no plano escolhido. Densidade visual e recursos mudam."
+            />
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <input
-                  type="text"
-                  placeholder="00000-000"
-                  className="eventify-input w-full"
-                  value={cep}
-                  inputMode="numeric"
-                  maxLength={9}
-                  onChange={(e) => {
-                    const mascarado = mascararCEP(e.target.value);
-                    setCep(mascarado);
-                    preencherCEP(mascarado);
-                  }}
-                  required
+            <hr className="border-[color:var(--hairline)]" />
+
+            {/* Endereço */}
+            <section className="grid gap-8">
+              <SectionTitle title="Endereço" subtitle="Use o CEP para preencher automaticamente." />
+              <div className="grid gap-8 sm:grid-cols-2">
+                <Field label="CEP">
+                  <input
+                    type="text"
+                    placeholder="00000-000"
+                    className="eventify-input"
+                    value={cep}
+                    inputMode="numeric"
+                    maxLength={9}
+                    onChange={(e) => {
+                      const mascarado = mascararCEP(e.target.value);
+                      setCep(mascarado);
+                      preencherCEP(mascarado);
+                    }}
+                    required
+                  />
+                  {erroCep && (
+                    <p className="mt-2 text-[12.5px] text-[color:var(--rose,#A85462)]">{erroCep}</p>
+                  )}
+                </Field>
+                <Field label="Rua">
+                  <input
+                    type="text"
+                    placeholder="Rua / Avenida"
+                    className="eventify-input"
+                    value={rua}
+                    onChange={(e) => setRua(e.target.value)}
+                    required
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-8 sm:grid-cols-3">
+                <Field label="Número">
+                  <input
+                    type="text"
+                    placeholder="123"
+                    className="eventify-input"
+                    value={numero}
+                    onChange={(e) => setNumero(e.target.value)}
+                    required
+                  />
+                </Field>
+                <Field label="Cidade">
+                  <input
+                    type="text"
+                    placeholder="Cidade"
+                    className="eventify-input"
+                    value={cidade}
+                    onChange={(e) => setCidade(e.target.value)}
+                    required
+                  />
+                </Field>
+                <Field label="UF">
+                  <input
+                    type="text"
+                    placeholder="SP"
+                    className="eventify-input uppercase"
+                    value={estado}
+                    maxLength={2}
+                    onChange={(e) => setEstado(e.target.value.toUpperCase())}
+                    required
+                  />
+                </Field>
+              </div>
+            </section>
+
+            <hr className="border-[color:var(--hairline)]" />
+
+            {/* Briefing */}
+            <section className="grid gap-8">
+              <SectionTitle
+                title="Briefing criativo"
+                subtitle="Quanto mais detalhes você der, mais único o site fica. A IA usa isso pra calibrar tom e visual."
+              />
+              <div className="grid gap-8 sm:grid-cols-2">
+                <Field label="Estilo visual">
+                  <input
+                    type="text"
+                    placeholder="Editorial · rústico · moderno..."
+                    className="eventify-input"
+                    value={estilo}
+                    onChange={(e) => setEstilo(e.target.value)}
+                    maxLength={120}
+                  />
+                </Field>
+                <Field label="Clima">
+                  <input
+                    type="text"
+                    placeholder="Romântico · vibrante · intimista..."
+                    className="eventify-input"
+                    value={clima}
+                    onChange={(e) => setClima(e.target.value)}
+                    maxLength={120}
+                  />
+                </Field>
+                <Field label="Público">
+                  <input
+                    type="text"
+                    placeholder="Família, amigos..."
+                    className="eventify-input"
+                    value={publico}
+                    onChange={(e) => setPublico(e.target.value)}
+                    maxLength={120}
+                  />
+                </Field>
+                <Field label="Cor principal">
+                  <div className="flex items-center gap-3 border-b border-[color:var(--hairline-2)] py-3">
+                    <input
+                      type="color"
+                      value={corPrincipal}
+                      onChange={(e) => setCorPrincipal(e.target.value)}
+                      className="h-9 w-12 cursor-pointer rounded-md border border-[color:var(--hairline-2)] bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={corPrincipal}
+                      onChange={(e) => setCorPrincipal(e.target.value)}
+                      className="flex-1 bg-transparent font-mono-tight text-[14px] uppercase outline-none"
+                    />
+                  </div>
+                </Field>
+              </div>
+
+              <Field label="Descreva o evento em poucas frases">
+                <textarea
+                  placeholder="Conte como você imagina seu evento..."
+                  rows={4}
+                  className="eventify-input min-h-[8rem] resize-y py-3 text-[17px]"
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  maxLength={1500}
                 />
-                {erroCep && <p className="mt-2 text-sm font-semibold text-rose-500">{erroCep}</p>}
+                <p className="mt-2 text-right text-[11px] text-[color:var(--muted)] font-mono-tight">
+                  {descricao.length} / 1500
+                </p>
+              </Field>
+            </section>
+
+            {aviso && (
+              <div
+                className={`border-y px-4 py-3 text-[13.5px] ${
+                  aviso.tipo === "erro"
+                    ? "border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] text-[color:var(--rose,#A85462)]"
+                    : aviso.tipo === "aviso"
+                      ? "border-[color:var(--gold)] bg-[var(--gold-soft)] text-[color:var(--gold-2)]"
+                      : "border-[color:var(--green,#5B7A4F)] bg-[rgba(91,122,79,0.06)] text-[color:var(--green,#5B7A4F)]"
+                }`}
+              >
+                {aviso.texto}
               </div>
-              <input type="text" placeholder="Rua" className="eventify-input" value={rua} onChange={(e) => setRua(e.target.value)} required />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <input type="text" placeholder="Número" className="eventify-input" value={numero} onChange={(e) => setNumero(e.target.value)} required />
-              <input type="text" placeholder="Cidade" className="eventify-input" value={cidade} onChange={(e) => setCidade(e.target.value)} required />
-              <input type="text" placeholder="Estado" className="eventify-input uppercase" value={estado} maxLength={2} onChange={(e) => setEstado(e.target.value.toUpperCase())} required />
-            </div>
-          </div>
-
-          <div className="space-y-5 rounded-2xl border border-[#e8e3f1] bg-gradient-to-br from-[#faf5ff] via-white to-[#fef3ff] p-6">
-            <div>
-              <h2 className="text-xl font-black text-[#090814]">
-                ✨ Briefing criativo <span className="ml-2 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">para a IA</span>
-              </h2>
-              <p className="eventify-muted mt-2 text-sm">
-                Quanto mais detalhes você der, mais único o site fica.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <input type="text" placeholder="Estilo visual" className="eventify-input" value={estilo} onChange={(e) => setEstilo(e.target.value)} maxLength={120} />
-              <input type="text" placeholder="Clima do evento" className="eventify-input" value={clima} onChange={(e) => setClima(e.target.value)} maxLength={120} />
-              <input type="text" placeholder="Público" className="eventify-input" value={publico} onChange={(e) => setPublico(e.target.value)} maxLength={120} />
-              <div className="flex items-center gap-3 rounded-2xl border border-[#e8e3f1] bg-white px-4">
-                <span className="eventify-muted text-sm">Cor principal</span>
-                <input type="color" value={corPrincipal} onChange={(e) => setCorPrincipal(e.target.value)} className="h-10 w-14 cursor-pointer rounded-lg border-0 bg-transparent" />
-                <input type="text" value={corPrincipal} onChange={(e) => setCorPrincipal(e.target.value)} className="flex-1 bg-transparent font-mono text-sm uppercase outline-none" />
-              </div>
-            </div>
-
-            <textarea placeholder="Conte como você imagina seu evento..." rows={4} className="eventify-input min-h-32 resize-y py-3" value={descricao} onChange={(e) => setDescricao(e.target.value)} maxLength={1500} />
-            <p className="eventify-muted text-right text-xs">{descricao.length}/1500</p>
-          </div>
-
-          {aviso && (
-            <div
-              className={`rounded-2xl border p-4 text-sm font-semibold ${
-                aviso.tipo === "erro"
-                  ? "border-rose-200 bg-rose-50 text-rose-600"
-                  : aviso.tipo === "aviso"
-                    ? "border-amber-200 bg-amber-50 text-amber-700"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
-              }`}
-            >
-              {aviso.texto}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={salvando}
-            className="eventify-button eventify-button-primary min-h-14 justify-center text-lg disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {salvando ? (
-              <>
-                <Spinner className="h-5 w-5" />
-                <span>Atualizando site...</span>
-              </>
-            ) : (
-              <>Salvar alterações →</>
             )}
-          </button>
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-[color:var(--hairline)] px-8 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-12">
+            <p className="text-[12.5px] text-[color:var(--muted)]">
+              Ao salvar, a IA regenera o site automaticamente.
+            </p>
+            <button
+              type="submit"
+              disabled={salvando}
+              className="eventify-button eventify-button-primary min-h-12 justify-center disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {salvando ? (
+                <>
+                  <Spinner className="h-5 w-5" />
+                  <span>Atualizando site...</span>
+                </>
+              ) : (
+                <>Salvar alterações <span aria-hidden>→</span></>
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </main>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[11px] uppercase tracking-[0.18em] text-[color:var(--ink-2)]">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div>
+      <h2 className="font-display text-[26px] italic tracking-[-0.01em] text-[color:var(--ink)]">{title}</h2>
+      <p className="mt-1.5 text-[13.5px] text-[color:var(--muted)]">{subtitle}</p>
+    </div>
   );
 }

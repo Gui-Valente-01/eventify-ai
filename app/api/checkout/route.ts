@@ -40,14 +40,18 @@ export async function POST(req: Request) {
   const user = supabase ? (await supabase.auth.getUser()).data.user : null;
   let evento: { id: string; slug: string; nome: string } | null = null;
   let stripeCustomerId: string | null = null;
+  let userPlan: string = "free";
+  let isAdmin = false;
 
   if (user && supabase) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id, plan, is_admin")
       .eq("id", user.id)
       .maybeSingle();
     stripeCustomerId = profile?.stripe_customer_id ?? null;
+    userPlan = profile?.plan ?? "free";
+    isAdmin = Boolean(profile?.is_admin);
   }
 
   if (body.eventId) {
@@ -66,6 +70,62 @@ export async function POST(req: Request) {
     }
 
     evento = data as { id: string; slug: string; nome: string };
+  }
+
+  // ============================================================
+  // BYPASS: admin OU usuário com plano premium publica direto,
+  // sem passar pelo Stripe.
+  // ============================================================
+  const planoSuficiente =
+    userPlan === "premium" ||
+    (userPlan === "intermediario" && planId !== "premium") ||
+    (userPlan === "basico" && planId === "basico");
+
+  const podeBypass = isAdmin || planoSuficiente;
+
+  if (podeBypass && user && supabase) {
+    // Caso 1: comprando plano sem evento → já tem acesso, só avisa
+    if (!evento) {
+      return NextResponse.json({
+        message: isAdmin
+          ? "Como admin, você já tem acesso a todos os planos. Nada a cobrar."
+          : `Você já está no plano ${userPlan}. Nada a cobrar.`,
+        configurado: true,
+        bypass: true,
+      });
+    }
+
+    // Caso 2: publicando evento → marca como publicado direto no banco
+    const agora = new Date().toISOString();
+    const { error: updErr } = await supabase
+      .from("eventos")
+      .update({
+        status: "published",
+        paid_at: agora,
+        published_at: agora,
+        paid_plan: planId,
+      })
+      .eq("id", evento.id)
+      .eq("owner_id", user.id);
+
+    if (updErr) {
+      logger.error("checkout", "falha ao publicar evento via bypass admin/premium", updErr, {
+        eventId: evento.id,
+        isAdmin,
+        userPlan,
+      });
+      return NextResponse.json(
+        { error: "Não foi possível publicar o evento. Tente novamente." },
+        { status: 500 }
+      );
+    }
+
+    const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    return NextResponse.json({
+      url: `${origin}/painel?checkout=success&event=${evento.id}&bypass=${isAdmin ? "admin" : "plan"}`,
+      configurado: true,
+      bypass: true,
+    });
   }
 
   const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

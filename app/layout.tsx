@@ -1,40 +1,62 @@
 import type { Metadata } from "next";
+import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  weight: ["300", "400", "500", "600"],
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  weight: ["400", "500"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: {
-    default: "Eventify AI — Sites de eventos com IA em minutos",
-    template: "%s | Eventify AI",
+    default: "Eventify — Sites de evento com IA",
+    template: "%s · Eventify",
   },
   description:
-    "Crie sites promocionais profissionais para casamentos, aniversários, eventos corporativos e festas. Conteúdo gerado por IA em minutos.",
+    "Crie sites editoriais para casamentos, aniversários, festas, eventos corporativos e religiosos. Templates premium curados, preenchidos com IA em minutos.",
   keywords: [
-    "site de eventos",
+    "site de evento",
     "convite digital",
     "casamento",
     "aniversário",
     "RSVP",
-    "site com IA",
+    "templates de evento",
     "convite online",
+    "Eventify",
   ],
-  authors: [{ name: "Eventify AI" }],
+  authors: [{ name: "Eventify" }],
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    siteName: "Eventify AI",
-    title: "Eventify AI — Sites de eventos com IA",
+    siteName: "Eventify",
+    title: "Eventify — Sites de evento com IA",
     description:
-      "Crie sites promocionais profissionais para qualquer evento em minutos. A IA monta layout e conteúdo automaticamente.",
+      "Templates editoriais curados, preenchidos com IA. Do briefing ao link publicado em uma tarde.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Eventify AI",
-    description: "Sites de eventos com IA em minutos.",
+    title: "Eventify",
+    description: "Sites de evento com IA. Editorial, sem template genérico.",
   },
-  icons: {
-    icon: "/favicon.ico",
-  },
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({
@@ -43,7 +65,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="h-full antialiased">
+    <html
+      lang="pt-BR"
+      className={`${fraunces.variable} ${inter.variable} ${jetbrains.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

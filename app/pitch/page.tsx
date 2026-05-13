@@ -4,53 +4,53 @@ import type { ReactNode } from "react";
 import BrandHeader from "@/components/BrandHeader";
 
 export const metadata: Metadata = {
-  title: "Pitch Deck | Eventify AI",
+  title: "Pitch Deck · Eventify",
   description:
-    "Pitch deck profissional do Eventify AI para apresentar a plataforma de sites automaticos para eventos com inteligencia artificial.",
+    "Pitch deck profissional do Eventify para apresentar a plataforma de sites automáticos para eventos com inteligência artificial.",
 };
 
 const slides = [
-  "Visao",
+  "Visão",
   "Problema",
-  "Solucao",
+  "Solução",
   "Produto",
   "Agentes",
   "Mercado",
   "Receita",
   "Diferenciais",
   "Roadmap",
-  "Proxima etapa",
+  "Próxima etapa",
 ];
 
 const productPillars = [
-  { title: "Briefing rapido", text: "Nome, tipo, data, cidade, imagem e detalhes do evento." },
-  { title: "IA criativa", text: "Texto, estilo, template e sugestoes comerciais automaticamente." },
-  { title: "Site publicado", text: "Pagina com hero, mapa, RSVP, QR Code e CTA de pagamento." },
+  { title: "Briefing rápido", text: "Nome, tipo, data, cidade, imagem e detalhes do evento." },
+  { title: "IA criativa", text: "Texto, estilo, template e sugestões comerciais automaticamente." },
+  { title: "Site publicado", text: "Página com hero, mapa, RSVP, QR Code e CTA de pagamento." },
 ];
 
-const agentMap = [
-  ["Interpreta", "Entende o cliente e transforma pedidos vagos em direcao clara."],
-  ["Desenha", "Define layout, cores, hierarquia visual e experiencia responsiva."],
+const agentMap: [string, string][] = [
+  ["Interpreta", "Entende o cliente e transforma pedidos vagos em direção clara."],
+  ["Desenha", "Define layout, cores, hierarquia visual e experiência responsiva."],
   ["Escreve", "Cria copy emocional, corporativa ou promocional conforme o evento."],
-  ["Monta", "Renderiza site, RSVP, mapa, QR Code e pagina publica."],
-  ["Otimiza", "Melhora qualidade, clareza, conversao e valor percebido."],
+  ["Monta", "Renderiza site, RSVP, mapa, QR Code e página pública."],
+  ["Otimiza", "Melhora qualidade, clareza, conversão e valor percebido."],
   ["Vende", "Gera ofertas, upsells, campanhas e argumentos comerciais."],
 ];
 
-const revenueLines = [
-  ["Assinatura mensal", "R$29 a R$79 por mes"],
-  ["Planos premium", "Templates, dominio, RSVP avancado"],
+const revenueLines: [string, string][] = [
+  ["Assinatura mensal", "R$ 29 a R$ 79 por mês"],
+  ["Planos premium", "Templates, domínio, RSVP avançado"],
   ["Parcerias B2B", "Cerimonialistas, buffets e produtoras"],
-  ["Servicos extras", "Setup assistido, fotos, copy premium"],
+  ["Serviços extras", "Setup assistido, fotos, copy premium"],
 ];
 
 const roadmap = [
-  "Banco de dados real e multiusuario",
-  "Checkout completo com Pix/cartao",
+  "Banco de dados real e multiusuário",
+  "Checkout completo com Pix/cartão",
   "Upload de imagens e biblioteca premium",
-  "Analytics de convidados e conversao",
+  "Analytics de convidados e conversão",
   "Templates por nicho e por cidade",
-  "Dominio personalizado e marketplace",
+  "Domínio personalizado e marketplace",
 ];
 
 function SlideShell({
@@ -72,32 +72,44 @@ function SlideShell({
     <section
       className={
         dark
-          ? "min-h-[calc(100vh-82px)] scroll-mt-24 bg-[#090814] text-white"
-          : "min-h-[calc(100vh-82px)] scroll-mt-24 bg-[#faf9ff] text-[#090814]"
+          ? "min-h-[calc(100vh-68px)] scroll-mt-24 bg-[color:var(--ink)] text-white"
+          : "min-h-[calc(100vh-68px)] scroll-mt-24 bg-[color:var(--paper)] text-[color:var(--ink)] border-b border-[color:var(--hairline)]"
       }
       id={`slide-${number}`}
     >
-      <div className="eventify-section flex min-h-[calc(100vh-82px)] flex-col justify-center py-12">
-        <div className="mb-8 flex items-center justify-between gap-4">
+      <div className="editorial-wrap flex min-h-[calc(100vh-68px)] flex-col justify-center py-16">
+        <div className="mb-9 flex items-center justify-between gap-4">
           <span
             className={
               dark
-                ? "rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-white/70"
+                ? "inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-1.5 text-[11.5px] uppercase tracking-[0.22em] text-[color:var(--gold)]"
                 : "eventify-kicker"
             }
           >
             {kicker}
           </span>
-          <span className={dark ? "text-sm font-black text-white/40" : "text-sm font-black text-[#a8a2c4]"}>
+          <span
+            className={
+              dark
+                ? "font-mono-tight text-[11.5px] tracking-[0.12em] text-white/40"
+                : "font-mono-tight text-[11.5px] tracking-[0.12em] text-[color:var(--muted-2)]"
+            }
+          >
             {String(number).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
           </span>
         </div>
 
-        <h1 className={dark ? "max-w-5xl text-5xl font-black leading-tight sm:text-7xl" : "eventify-title max-w-5xl text-5xl sm:text-7xl"}>
+        <h1
+          className={
+            dark
+              ? "max-w-[24ch] font-display text-[clamp(40px,5.8vw,88px)] font-light leading-[1.02] tracking-[-0.02em]"
+              : "eventify-title max-w-[24ch] text-[clamp(40px,5.8vw,88px)]"
+          }
+        >
           {title}
         </h1>
 
-        <div className="mt-10">{children}</div>
+        <div className="mt-12">{children}</div>
       </div>
     </section>
   );
@@ -105,43 +117,57 @@ function SlideShell({
 
 function BrowserMockup() {
   return (
-    <div className="eventify-card overflow-hidden p-3 shadow-2xl">
-      <div className="flex items-center gap-2 border-b border-[#e8e3f1] px-3 py-2">
-        <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-        <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
-        <span className="h-3 w-3 rounded-full bg-[#28c840]" />
-        <span className="ml-3 rounded-full bg-[#f3effb] px-3 py-1 text-xs font-bold text-[#5f5a72]">
-          eventify.ai/evento/corporativo
+    <div className="overflow-hidden rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] ring-glow">
+      <div className="flex items-center gap-2 border-b border-[color:var(--hairline)] px-4 py-2.5">
+        <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--hairline-2)]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--hairline-2)]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--hairline-2)]" />
+        <span className="ml-3 rounded-full bg-[color:var(--paper-2)] px-3 py-1 text-[11px] font-mono-tight text-[color:var(--muted)]">
+          eventify.app/evento/corporativo
         </span>
       </div>
 
-      <div className="grid gap-0 overflow-hidden rounded-2xl bg-[#f8fbff] lg:grid-cols-[1fr_0.8fr]">
-        <div className="p-8">
-          <span className="rounded-full bg-[#dbeafe] px-3 py-1 text-xs font-black uppercase tracking-widest text-[#2563eb]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.8fr]">
+        <div className="border-b border-[color:var(--hairline)] p-9 lg:border-b-0 lg:border-r">
+          <span className="rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--paper)] px-3 py-1 text-[10.5px] uppercase tracking-[0.18em] text-[color:var(--ink-2)]">
             Summit Tech AI 2026
           </span>
-          <h3 className="mt-5 text-4xl font-black leading-tight text-[#0f172a]">Conferencia premium gerada pela IA.</h3>
-          <p className="mt-4 max-w-md text-sm leading-6 text-[#475569]">
-            Uma pagina completa com posicionamento, agenda, mapa, confirmacao de presenca e CTA para reservar lugar.
+          <h3 className="mt-5 font-display text-[36px] font-light leading-[1.05] tracking-[-0.02em] text-[color:var(--ink)]">
+            Conferência <em className="italic text-[color:var(--gold)]">premium</em> gerada pela IA.
+          </h3>
+          <p className="mt-4 max-w-md text-[14px] leading-[1.55] text-[color:var(--muted)]">
+            Uma página completa com posicionamento, agenda, mapa, confirmação de presença e CTA para reservar lugar.
           </p>
-          <div className="mt-7 grid gap-3 sm:grid-cols-3">
+          <div className="mt-7 grid gap-2.5 sm:grid-cols-3">
             {["Keynotes", "Networking", "Credenciamento"].map((item) => (
-              <div key={item} className="rounded-2xl border border-[#c7d2fe] bg-white p-4 text-sm font-black text-[#1d4ed8]">
+              <div
+                key={item}
+                className="rounded-[8px] border border-[color:var(--hairline-2)] bg-[color:var(--paper)] p-3.5 text-center text-[12.5px] text-[color:var(--ink-2)]"
+              >
                 {item}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#dbeafe] via-[#c7d2fe] to-white p-8">
-          <div className="rounded-3xl bg-white/85 p-6 shadow-xl backdrop-blur">
-            <p className="text-xs font-black uppercase tracking-widest text-[#2563eb]">Score de qualidade</p>
-            <p className="mt-2 text-6xl font-black text-[#0f172a]">94</p>
-            <div className="mt-5 space-y-3">
-              {["Copy alinhada", "Template corporativo", "CTA forte"].map((item) => (
-                <div key={item} className="flex items-center justify-between rounded-xl bg-[#eff6ff] px-4 py-3 text-sm font-bold text-[#0f172a]">
+        <div className="bg-[color:var(--paper-2)] p-8">
+          <div className="rounded-[12px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-6">
+            <p className="text-[10.5px] uppercase tracking-[0.22em] text-[color:var(--gold)]">
+              Score de qualidade
+            </p>
+            <p className="mt-3 font-display text-[72px] font-light leading-none tracking-[-0.02em] text-[color:var(--ink)]">
+              94
+            </p>
+            <div className="mt-6 space-y-2">
+              {["Copy alinhada", "Template editorial", "CTA forte"].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center justify-between border-t border-[color:var(--hairline)] py-2.5 text-[12.5px] text-[color:var(--ink-2)]"
+                >
                   <span>{item}</span>
-                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700">ok</span>
+                  <span className="text-[10.5px] uppercase tracking-[0.14em] text-[color:var(--green,#5B7A4F)]">
+                    ok
+                  </span>
                 </div>
               ))}
             </div>
@@ -154,7 +180,7 @@ function BrowserMockup() {
 
 export default function PitchPage() {
   return (
-    <main className="eventify-page bg-[#faf9ff]">
+    <main className="eventify-page">
       <BrandHeader
         actions={[
           { href: "/apresentacao", label: "Resumo comercial", variant: "ghost" },
@@ -163,13 +189,13 @@ export default function PitchPage() {
         ]}
       />
 
-      <nav className="sticky top-[82px] z-20 hidden border-b border-[#e8e3f1] bg-white/80 px-6 py-3 backdrop-blur lg:block">
-        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto">
+      <nav className="sticky top-[68px] z-30 hidden border-b border-[color:var(--hairline)] bg-[color:var(--paper)]/85 backdrop-blur-md lg:block">
+        <div className="editorial-wrap flex gap-2 overflow-x-auto py-3">
           {slides.map((slide, index) => (
             <a
               key={slide}
               href={`#slide-${index + 1}`}
-              className="rounded-full border border-[#e8e3f1] bg-white px-4 py-2 text-xs font-black text-[#5f5a72] transition hover:border-[#8847e7] hover:text-[#8847e7]"
+              className="shrink-0 rounded-full border border-[color:var(--hairline)] bg-[color:var(--surface)] px-3.5 py-1.5 text-[12px] text-[color:var(--muted)] transition hover:border-[color:var(--ink)] hover:text-[color:var(--ink)]"
             >
               {index + 1}. {slide}
             </a>
@@ -177,11 +203,15 @@ export default function PitchPage() {
         </div>
       </nav>
 
-      <SlideShell number={1} kicker="Pitch deck" title="Eventify AI cria sites de eventos com inteligencia artificial.">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+      <SlideShell
+        number={1}
+        kicker="Pitch deck"
+        title="Eventify cria sites de eventos com inteligência artificial."
+      >
+        <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
           <div>
-            <p className="eventify-muted max-w-2xl text-2xl leading-9">
-              Uma plataforma SaaS para transformar dados de eventos em sites promocionais completos, bonitos e vendaveis em minutos.
+            <p className="max-w-[44ch] text-[20px] leading-[1.55] text-[color:var(--muted)]">
+              Uma plataforma SaaS para transformar dados de eventos em sites promocionais completos, bonitos e vendáveis em minutos.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/apresentacao" className="eventify-button eventify-button-primary">
@@ -196,128 +226,240 @@ export default function PitchPage() {
         </div>
       </SlideShell>
 
-      <SlideShell number={2} kicker="Problema" title="O mercado de eventos compra rapidez, mas ainda recebe processo manual.">
+      <SlideShell
+        number={2}
+        kicker="Problema"
+        title="O mercado de eventos compra rapidez, mas ainda recebe processo manual."
+      >
         <div className="grid gap-5 lg:grid-cols-3">
           {[
-            ["Tempo", "Briefing, design, revisoes e publicacao atrasam eventos que precisam ir ao ar rapido."],
-            ["Custo", "Um site personalizado costuma depender de freelancer, agencia ou ferramenta generica."],
-            ["Conversao", "Convites simples nao resolvem mapa, presenca, copy, CTA e valor percebido."],
+            ["Tempo", "Briefing, design, revisões e publicação atrasam eventos que precisam ir ao ar rápido."],
+            ["Custo", "Um site personalizado costuma depender de freelancer, agência ou ferramenta genérica."],
+            ["Conversão", "Convites simples não resolvem mapa, presença, copy, CTA e valor percebido."],
           ].map(([title, text]) => (
-            <article key={title} className="eventify-card p-8">
-              <h3 className="text-3xl font-black text-[#090814]">{title}</h3>
-              <p className="eventify-muted mt-4 text-lg leading-8">{text}</p>
+            <article
+              key={title}
+              className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8"
+            >
+              <h3 className="font-display text-[32px] font-light italic tracking-[-0.01em] text-[color:var(--ink)]">
+                {title}
+              </h3>
+              <p className="mt-4 text-[15px] leading-[1.65] text-[color:var(--muted)]">{text}</p>
             </article>
           ))}
         </div>
       </SlideShell>
 
-      <SlideShell number={3} kicker="Solucao" title="Uma fabrica automatizada de sites promocionais para eventos.">
+      <SlideShell
+        number={3}
+        kicker="Solução"
+        title="Uma fábrica automatizada de sites promocionais para eventos."
+      >
         <div className="grid gap-5 lg:grid-cols-3">
           {productPillars.map((pillar, index) => (
-            <article key={pillar.title} className="eventify-card p-8">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8847e7] to-[#ec4899] text-xl font-black text-white">
-                {index + 1}
+            <article
+              key={pillar.title}
+              className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8"
+            >
+              <span className="font-mono-tight text-[12px] tracking-[0.16em] text-[color:var(--gold)]">
+                0{index + 1}
               </span>
-              <h3 className="mt-6 text-3xl font-black text-[#090814]">{pillar.title}</h3>
-              <p className="eventify-muted mt-4 text-lg leading-8">{pillar.text}</p>
+              <h3 className="mt-5 font-display text-[28px] font-normal tracking-[-0.01em] text-[color:var(--ink)]">
+                {pillar.title}
+              </h3>
+              <p className="mt-3 text-[15px] leading-[1.6] text-[color:var(--muted)]">{pillar.text}</p>
             </article>
           ))}
         </div>
       </SlideShell>
 
-      <SlideShell number={4} kicker="Produto" title="Do cadastro ao site publicado, tudo dentro do mesmo fluxo.">
+      <SlideShell
+        number={4}
+        kicker="Produto"
+        title="Do cadastro ao site publicado, tudo dentro do mesmo fluxo."
+      >
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div className="space-y-4">
-            {["Criar evento", "Gerar com IA", "Editar e aprovar", "Assinar e publicar", "Receber RSVP"].map((step, index) => (
-              <div key={step} className="eventify-card flex items-center gap-5 p-5">
-                <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-[#f3effb] text-lg font-black text-[#8847e7]">
-                  {index + 1}
-                </span>
-                <p className="text-xl font-black text-[#2c2638]">{step}</p>
-              </div>
-            ))}
+          <div className="space-y-3">
+            {["Criar evento", "Gerar com IA", "Editar e aprovar", "Assinar e publicar", "Receber RSVP"].map(
+              (step, index) => (
+                <div
+                  key={step}
+                  className="flex items-center gap-5 rounded-[12px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-5"
+                >
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--paper-2)] font-mono-tight text-[12px] text-[color:var(--gold)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <p className="font-display text-[20px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+                    {step}
+                  </p>
+                </div>
+              )
+            )}
           </div>
           <BrowserMockup />
         </div>
       </SlideShell>
 
-      <SlideShell number={5} kicker="Agentes" title="A IA trabalha como uma equipe, nao como uma resposta unica.">
+      <SlideShell
+        number={5}
+        kicker="Agentes"
+        title="A IA trabalha como uma equipe, não como uma resposta única."
+      >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {agentMap.map(([title, text]) => (
-            <article key={title} className="eventify-card p-6">
-              <h3 className="text-2xl font-black text-[#090814]">{title}</h3>
-              <p className="eventify-muted mt-3 leading-7">{text}</p>
+            <article
+              key={title}
+              className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-7"
+            >
+              <h3 className="font-display text-[24px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+                {title}
+              </h3>
+              <p className="mt-3 text-[14px] leading-[1.6] text-[color:var(--muted)]">{text}</p>
             </article>
           ))}
         </div>
       </SlideShell>
 
-      <SlideShell number={6} kicker="Mercado" title="O cliente ja existe: quem organiza evento precisa aparecer melhor e mais rapido.">
-        <div className="grid gap-5 lg:grid-cols-4">
-          {["Casamentos", "Aniversarios", "Corporativo", "Festas", "Religioso", "Formaturas", "Workshops", "Lojas locais"].map((market) => (
-            <article key={market} className="eventify-card p-6">
-              <p className="text-2xl font-black text-[#090814]">{market}</p>
-              <p className="eventify-muted mt-3 text-sm leading-6">Nicho recorrente com urgencia, divulgacao e necessidade de confirmacao.</p>
-            </article>
-          ))}
+      <SlideShell
+        number={6}
+        kicker="Mercado"
+        title="O cliente já existe: quem organiza evento precisa aparecer melhor e mais rápido."
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {["Casamentos", "Aniversários", "Corporativo", "Festas", "Religioso", "Formaturas", "Workshops", "Lojas locais"].map(
+            (market) => (
+              <article
+                key={market}
+                className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-6"
+              >
+                <p className="font-display text-[24px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+                  {market}
+                </p>
+                <p className="mt-3 text-[13px] leading-[1.55] text-[color:var(--muted)]">
+                  Nicho recorrente com urgência, divulgação e necessidade de confirmação.
+                </p>
+              </article>
+            )
+          )}
         </div>
       </SlideShell>
 
-      <SlideShell number={7} kicker="Receita" title="Monetizacao recorrente com aumento natural de ticket.">
+      <SlideShell
+        number={7}
+        kicker="Receita"
+        title="Monetização recorrente com aumento natural de ticket."
+      >
         <div className="grid gap-5 lg:grid-cols-4">
           {revenueLines.map(([title, text]) => (
-            <article key={title} className="eventify-card p-7">
-              <h3 className="text-2xl font-black text-[#090814]">{title}</h3>
-              <p className="eventify-muted mt-4 text-lg leading-8">{text}</p>
+            <article
+              key={title}
+              className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-7"
+            >
+              <h3 className="font-display text-[24px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+                {title}
+              </h3>
+              <p className="mt-3 text-[14.5px] leading-[1.6] text-[color:var(--muted)]">{text}</p>
             </article>
           ))}
         </div>
       </SlideShell>
 
-      <SlideShell number={8} kicker="Diferenciais" title="O diferencial e juntar IA, design, publicacao e negocio no mesmo produto.">
+      <SlideShell
+        number={8}
+        kicker="Diferenciais"
+        title="IA, design, publicação e negócio no mesmo produto."
+      >
         <div className="grid gap-6 lg:grid-cols-2">
-          <article className="eventify-card p-8">
-            <h3 className="text-3xl font-black text-[#090814]">Para o cliente</h3>
-            <div className="mt-6 grid gap-3">
-              {["Nao precisa escrever textos", "Nao precisa escolher layout do zero", "Nao precisa contratar tecnico", "Publica quando aprovar"].map((item) => (
-                <p key={item} className="rounded-2xl bg-[#faf9ff] p-4 font-bold text-[#2c2638]">{item}</p>
+          <article className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8">
+            <h3 className="font-display text-[28px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+              Para o cliente
+            </h3>
+            <ul className="mt-5">
+              {[
+                "Não precisa escrever textos",
+                "Não precisa escolher layout do zero",
+                "Não precisa contratar técnico",
+                "Publica quando aprovar",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex gap-2.5 border-t border-[color:var(--hairline)] py-3 text-[14px] text-[color:var(--ink-2)]"
+                >
+                  <span className="font-mono-tight text-[color:var(--gold)]">+</span>
+                  {item}
+                </li>
               ))}
-            </div>
+            </ul>
           </article>
-          <article className="eventify-card p-8">
-            <h3 className="text-3xl font-black text-[#090814]">Para o negocio</h3>
-            <div className="mt-6 grid gap-3">
-              {["Baixo custo operacional", "Venda escalavel", "Templates reaproveitaveis", "Upsells claros"].map((item) => (
-                <p key={item} className="rounded-2xl bg-[#faf9ff] p-4 font-bold text-[#2c2638]">{item}</p>
+          <article className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8">
+            <h3 className="font-display text-[28px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+              Para o negócio
+            </h3>
+            <ul className="mt-5">
+              {[
+                "Baixo custo operacional",
+                "Venda escalável",
+                "Templates reaproveitáveis",
+                "Upsells claros",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex gap-2.5 border-t border-[color:var(--hairline)] py-3 text-[14px] text-[color:var(--ink-2)]"
+                >
+                  <span className="font-mono-tight text-[color:var(--gold)]">+</span>
+                  {item}
+                </li>
               ))}
-            </div>
+            </ul>
           </article>
         </div>
       </SlideShell>
 
-      <SlideShell number={9} kicker="Roadmap" title="O caminho para virar uma plataforma completa de eventos.">
+      <SlideShell
+        number={9}
+        kicker="Roadmap"
+        title="O caminho para virar uma plataforma completa de eventos."
+      >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {roadmap.map((item, index) => (
-            <article key={item} className="eventify-card p-7">
-              <span className="text-sm font-black uppercase tracking-widest text-[#8847e7]">Fase {index + 1}</span>
-              <h3 className="mt-4 text-2xl font-black leading-tight text-[#090814]">{item}</h3>
+            <article
+              key={item}
+              className="rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-7"
+            >
+              <span className="text-[10.5px] uppercase tracking-[0.22em] text-[color:var(--gold)]">
+                Fase {index + 1}
+              </span>
+              <h3 className="mt-3 font-display text-[22px] font-normal leading-[1.2] tracking-[-0.01em] text-[color:var(--ink)]">
+                {item}
+              </h3>
             </article>
           ))}
         </div>
       </SlideShell>
 
-      <SlideShell number={10} kicker="Proxima etapa" title="Transformar o prototipo em produto vendavel, medido e escalavel." tone="dark">
-        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+      <SlideShell
+        number={10}
+        kicker="Próxima etapa"
+        title="Do protótipo a um produto vendável, medido e escalável."
+        tone="dark"
+      >
+        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
-            <p className="max-w-2xl text-2xl leading-9 text-white/75">
-              A base ja tem eventos, pagina promocional, templates, agentes, admin, pagamento e publicacao. O proximo salto e lapidar onboarding, checkout, metricas e distribuicao comercial.
+            <p className="max-w-[44ch] text-[19px] leading-[1.6] text-white/65">
+              A base já tem eventos, página promocional, templates, agentes, admin, pagamento e publicação. O próximo salto é lapidar onboarding, checkout, métricas e distribuição comercial.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/novo-evento" className="inline-flex min-h-12 items-center rounded-xl bg-white px-7 font-black text-[#090814] shadow-xl transition hover:scale-105">
-                Criar demonstracao
+              <Link
+                href="/novo-evento"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-[14.5px] font-medium text-[color:var(--ink)] transition-transform hover:-translate-y-px"
+              >
+                Criar demonstração <span aria-hidden>→</span>
               </Link>
-              <Link href="/apresentacao" className="inline-flex min-h-12 items-center rounded-xl border border-white/20 bg-white/10 px-7 font-black text-white backdrop-blur transition hover:bg-white/20">
-                Ver apresentacao
+              <Link
+                href="/apresentacao"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3.5 text-[14.5px] text-white transition-colors hover:bg-white/5"
+              >
+                Ver apresentação
               </Link>
             </div>
           </div>
@@ -327,11 +469,14 @@ export default function PitchPage() {
               ["Foco", "Venda real para nichos de eventos"],
               ["Prova", "Sites exemplo + assinatura mensal"],
               ["Escala", "Templates, agentes e parcerias B2B"],
-              ["Meta", "SaaS de criacao automatica de sites"],
+              ["Meta", "SaaS de criação automática de sites"],
             ].map(([title, text]) => (
-              <article key={title} className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur">
-                <h3 className="text-2xl font-black">{title}</h3>
-                <p className="mt-3 text-sm font-semibold leading-6 text-white/70">{text}</p>
+              <article
+                key={title}
+                className="rounded-[14px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur"
+              >
+                <h3 className="font-display text-[22px] italic tracking-[-0.01em] text-white">{title}</h3>
+                <p className="mt-3 text-[13.5px] leading-[1.55] text-white/65">{text}</p>
               </article>
             ))}
           </div>

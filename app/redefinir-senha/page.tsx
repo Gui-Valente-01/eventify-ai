@@ -62,19 +62,26 @@ export default function RedefinirSenhaPage() {
   return (
     <main className="eventify-page">
       <BrandHeader />
-      <section className="eventify-section flex justify-center">
-        <div className="eventify-card w-full max-w-md p-10">
-          <span className="eventify-kicker">✦ Nova senha</span>
-          <h1 className="eventify-title mt-5 text-4xl">Defina sua nova senha</h1>
-          <p className="eventify-muted mt-3">Use no mínimo 6 caracteres.</p>
+      <section className="editorial-narrow py-24 sm:py-32">
+        <span className="eventify-kicker">Nova senha</span>
+        <h1 className="eventify-title mt-6 text-[clamp(40px,5vw,64px)]">
+          Defina sua <em>nova senha.</em>
+        </h1>
+        <p className="mt-4 text-[16px] text-[color:var(--muted)]">
+          Use no mínimo 6 caracteres. Algo que você lembre.
+        </p>
 
-          {!pronto ? (
-            <p className="eventify-muted mt-8 text-center text-sm">Validando link...</p>
-          ) : (
-            <form onSubmit={redefinir} className="mt-8 grid gap-4">
+        {!pronto ? (
+          <p className="mt-12 text-center text-[14px] text-[color:var(--muted)]">Validando link...</p>
+        ) : (
+          <form onSubmit={redefinir} className="mt-12 grid gap-7">
+            <label className="block">
+              <span className="mb-2 block text-[11px] uppercase tracking-[0.18em] text-[color:var(--ink-2)]">
+                Nova senha
+              </span>
               <input
                 type="password"
-                placeholder="Nova senha"
+                placeholder="••••••••"
                 className="eventify-input"
                 value={senha}
                 autoComplete="new-password"
@@ -82,9 +89,15 @@ export default function RedefinirSenhaPage() {
                 required
                 minLength={6}
               />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-[11px] uppercase tracking-[0.18em] text-[color:var(--ink-2)]">
+                Confirmar
+              </span>
               <input
                 type="password"
-                placeholder="Confirmar nova senha"
+                placeholder="••••••••"
                 className="eventify-input"
                 value={confirmar}
                 autoComplete="new-password"
@@ -92,29 +105,35 @@ export default function RedefinirSenhaPage() {
                 required
                 minLength={6}
               />
+            </label>
 
-              {aviso && (
-                <p
-                  className={`rounded-2xl border p-3 text-sm font-semibold ${
-                    aviso.tipo === "erro"
-                      ? "border-rose-200 bg-rose-50 text-rose-600"
-                      : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  }`}
-                >
-                  {aviso.texto}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={carregando}
-                className="eventify-button eventify-button-primary min-h-12 justify-center disabled:opacity-70"
+            {aviso && (
+              <p
+                className={
+                  aviso.tipo === "erro"
+                    ? "border-y border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] px-4 py-3 text-[13.5px] text-[color:var(--rose,#A85462)]"
+                    : "border-y border-[color:var(--green,#5B7A4F)] bg-[rgba(91,122,79,0.06)] px-4 py-3 text-[13.5px] text-[color:var(--green,#5B7A4F)]"
+                }
               >
-                {carregando ? <><Spinner className="h-4 w-4" /> Salvando...</> : <>Atualizar senha →</>}
-              </button>
-            </form>
-          )}
-        </div>
+                {aviso.texto}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={carregando}
+              className="eventify-button eventify-button-primary mt-2 min-h-[3rem] justify-center disabled:opacity-70"
+            >
+              {carregando ? (
+                <>
+                  <Spinner className="h-4 w-4" /> Salvando...
+                </>
+              ) : (
+                <>Atualizar senha <span aria-hidden>→</span></>
+              )}
+            </button>
+          </form>
+        )}
       </section>
     </main>
   );

@@ -20,7 +20,7 @@ export default function ManageSubscriptionButton({ enabled }: ManageSubscription
       const res = await fetch("/api/customer-portal", { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data.url) {
-        setError(data.error || "Nao foi possivel abrir o portal.");
+        setError(data.error || "Não foi possível abrir o portal.");
         return;
       }
       window.location.assign(data.url);
@@ -37,7 +37,7 @@ export default function ManageSubscriptionButton({ enabled }: ManageSubscription
         type="button"
         onClick={openPortal}
         disabled={!enabled || loading}
-        className="eventify-button eventify-button-primary justify-center disabled:cursor-not-allowed disabled:opacity-60"
+        className="eventify-button eventify-button-ghost justify-center disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? (
           <>
@@ -49,12 +49,12 @@ export default function ManageSubscriptionButton({ enabled }: ManageSubscription
         )}
       </button>
       {!enabled && (
-        <p className="text-xs font-semibold text-[#5f5a72]">
-          O portal fica disponivel depois da primeira assinatura confirmada.
+        <p className="text-[12px] text-[color:var(--muted)]">
+          O portal fica disponível depois da primeira assinatura confirmada.
         </p>
       )}
       {error && (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
+        <p className="border-y border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] px-3 py-2 text-[12px] text-[color:var(--rose,#A85462)]">
           {error}
         </p>
       )}

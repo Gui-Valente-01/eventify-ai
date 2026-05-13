@@ -16,6 +16,22 @@ export type Briefing = {
   descricao?: string;
   detalhes?: Record<string, string>;
   planoSelecionado?: string;
+  /** ID do template visual selecionado na galeria (lib/templateGallery). */
+  templateId?: string;
+  /** Customização salva (cores + fontes) — sobrescreve as defaults do template. */
+  customTemplate?: {
+    nome?: string;
+    paleta?: string[]; // [fundo, superficie, ?, texto, acento]
+    fontDisplayId?: string;
+    fontBodyId?: string;
+    /** Profile da última análise por referência. */
+    referenceProfile?: {
+      vibe: string;
+      estilo: string;
+      inspiracaoParaIA: string;
+    };
+    salvoEm?: string; // ISO datetime
+  };
 };
 
 export type EventStatus = "draft" | "preview" | "paid" | "published" | "archived";
