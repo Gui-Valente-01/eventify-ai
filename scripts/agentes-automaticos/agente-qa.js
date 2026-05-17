@@ -33,12 +33,12 @@ function rodarComando(comando) {
   }
 }
 
-function warnExit(motivo) {
-  console.warn(`[QA] AVISO: ${motivo}`)
-  console.warn(`[QA] Saindo com exit 0 (modo seguro).`)
-  process.exit(0)
+class WarnExit extends Error {
+  constructor(motivo) { super(motivo); this.name = "WarnExit" }
 }
+function warnExit(motivo) { throw new WarnExit(motivo) }
 
+async function main() {
 console.log(`[QA] Agente QA iniciado (modo: ${QA_MODE}, threshold: ${QA_BLOCK_LEVEL})`)
 
 const checkCmd = fullBuild ? "npm run build" : "npx tsc --noEmit"
@@ -162,7 +162,8 @@ if (!veredito) {
 
 if (deveriaBlocar && QA_MODE === "blocking") {
   console.error(`[QA] BLOQUEADO: severidade '${severity}' >= threshold '${QA_BLOCK_LEVEL}'.`)
-  process.exit(1)
+  process.exitCode = 1
+  return
 }
 
 if (deveriaBlocar) {
@@ -170,3 +171,16 @@ if (deveriaBlocar) {
 }
 
 console.log(`[QA] Agente QA finalizado com exit 0.`)
+
+}
+
+main().catch((err) => {
+  if (err instanceof WarnExit) {
+    console.warn(`[QA] AVISO: ${err.message}`)
+    console.warn(`[QA] Saindo com exit 0 (modo seguro).`)
+    process.exitCode = 0
+    return
+  }
+  console.error("[QA] Erro inesperado:", err)
+  process.exitCode = 1
+})
