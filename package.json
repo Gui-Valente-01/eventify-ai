@@ -12,7 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "health-check": "tsx scripts/health-check.ts",
     "qa": "node scripts/agentes-automaticos/agente-qa.js",
-    "qa:blocking": "node -e \"process.env.QA_MODE='blocking';process.env.QA_BLOCK_LEVEL='critical';require('child_process').execSync('node scripts/agentes-automaticos/agente-qa.js',{stdio:'inherit'})\"",
+    "qa:blocking": "node scripts/agentes-automaticos/agente-qa.js --blocking --critical",
     "cto": "node scripts/agentes-automaticos/agente-cto.js",
     "arquiteto": "node scripts/agentes-automaticos/agente-arquiteto.js",
     "produto": "node scripts/agentes-automaticos/agente-produto.js",

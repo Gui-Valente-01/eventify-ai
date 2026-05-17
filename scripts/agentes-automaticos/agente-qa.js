@@ -12,8 +12,10 @@ const DATA = new Date().toISOString().slice(0, 10)
 
 const args = process.argv.slice(2)
 const fullBuild = args.includes("--full")
-const QA_MODE = (process.env.QA_MODE || "warn-only").toLowerCase()
-const QA_BLOCK_LEVEL = (process.env.QA_BLOCK_LEVEL || "high").toLowerCase()
+const argMode = args.includes("--blocking") ? "blocking" : null
+const argLevel = args.includes("--critical") ? "critical" : args.includes("--high") ? "high" : args.includes("--medium") ? "medium" : null
+const QA_MODE = (argMode || process.env.QA_MODE || "warn-only").toLowerCase()
+const QA_BLOCK_LEVEL = (argLevel || process.env.QA_BLOCK_LEVEL || "high").toLowerCase()
 
 const SEVERITY_RANK = { none: 0, low: 1, medium: 2, high: 3, critical: 4 }
 const blockRank = SEVERITY_RANK[QA_BLOCK_LEVEL] ?? SEVERITY_RANK.high
