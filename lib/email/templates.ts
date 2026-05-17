@@ -127,3 +127,95 @@ Precisa de ajuda? Responde este e-mail ou escreve pra contato@eventify.app
 
   return { subject, html, text };
 }
+
+type ConviteArgs = {
+  nomeEvento: string;
+  slug: string;
+  appUrl: string;
+  dataEvento?: string; // formatada já
+  local?: string;
+  nomeAnfitriao?: string;
+};
+
+export function templateConvite(args: ConviteArgs): { subject: string; html: string; text: string } {
+  const evento = escapeHtml(args.nomeEvento);
+  const slug = encodeURIComponent(args.slug);
+  const appUrl = args.appUrl.replace(/\/$/, "");
+  const link = `${appUrl}/cliente/${slug}`;
+  const data = args.dataEvento ? escapeHtml(args.dataEvento) : "";
+  const local = args.local ? escapeHtml(args.local) : "";
+  const anfitriao = args.nomeAnfitriao ? escapeHtml(args.nomeAnfitriao) : "";
+
+  const subject = `Convite: ${args.nomeEvento}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${subject}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f2ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f5f2ed;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="540" style="max-width:540px;background-color:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e8e2d5;">
+          <tr>
+            <td align="center" style="padding:40px 36px 24px 36px;">
+              <p style="margin:0 0 12px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#9c8c6e;">Você foi convidado para</p>
+              <h1 style="margin:0;font-family:Georgia,serif;font-size:36px;font-weight:300;font-style:italic;line-height:1.1;color:#1a1812;">
+                ${evento}
+              </h1>
+              ${anfitriao ? `<p style="margin:14px 0 0 0;font-size:14px;color:#6b6453;">por ${anfitriao}</p>` : ""}
+            </td>
+          </tr>
+
+          ${(data || local) ? `
+          <tr>
+            <td style="padding:8px 36px 24px 36px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                ${data ? `<tr><td style="padding:10px 0;font-size:13px;color:#3d3a31;border-bottom:1px solid #f0ebe0;"><strong style="color:#1a1812;">Quando:</strong> ${data}</td></tr>` : ""}
+                ${local ? `<tr><td style="padding:10px 0;font-size:13px;color:#3d3a31;${data ? "" : ""}"><strong style="color:#1a1812;">Onde:</strong> ${local}</td></tr>` : ""}
+              </table>
+            </td>
+          </tr>` : ""}
+
+          <tr>
+            <td align="center" style="padding:24px 36px 36px 36px;">
+              <a href="${link}" style="display:inline-block;background-color:#1a1812;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:14px;font-weight:500;">
+                Ver convite e confirmar →
+              </a>
+              <p style="margin:20px 0 0 0;font-size:12px;color:#9c8c6e;">
+                ou copie o link:<br />
+                <a href="${link}" style="color:#b8935a;word-break:break-all;">${link}</a>
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:18px 36px;background-color:#faf7f0;border-top:1px solid #e8e2d5;">
+              <p style="margin:0;font-size:12px;line-height:1.55;color:#6b6453;text-align:center;">
+                Confirme sua presença pelo link acima. ${anfitriao ? `${anfitriao} agradece!` : ""}
+              </p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:20px 0 0 0;font-size:10.5px;color:#9c8c6e;">
+          Enviado via Eventify · <a href="${appUrl}" style="color:#9c8c6e;">eventify.app</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  const text = `Você foi convidado para: ${args.nomeEvento}
+${anfitriao ? `por ${args.nomeAnfitriao}\n` : ""}
+${data ? `Quando: ${args.dataEvento}\n` : ""}${local ? `Onde: ${args.local}\n` : ""}
+Ver convite e confirmar presença:
+${link}
+
+— Enviado via Eventify`;
+
+  return { subject, html, text };
+}

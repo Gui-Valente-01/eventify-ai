@@ -33,6 +33,14 @@ export default function Evento() {
   const [formEdit, setFormEdit] = useState<EventoDados | null>(null);
   const [salvandoEdit, setSalvandoEdit] = useState(false);
   const [publicando, setPublicando] = useState(false);
+  const [convidando, setConvidando] = useState(false);
+  const [emailsInput, setEmailsInput] = useState("");
+  const [enviandoConvites, setEnviandoConvites] = useState(false);
+  const [resultadoConvites, setResultadoConvites] = useState<{
+    enviados: number;
+    falhou: number;
+    total: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!mensagem) return;
@@ -122,6 +130,32 @@ export default function Evento() {
     if (!evento) return;
     setFormEdit({ ...evento });
     setEditando(true);
+  }
+
+  async function enviarConvites() {
+    if (!evento?.id || enviandoConvites) return;
+    setEnviandoConvites(true);
+    setResultadoConvites(null);
+    try {
+      const res = await fetch(`/api/eventos/${evento.id}/convidar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails: emailsInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMensagem({ tipo: "erro", texto: data.error || "Erro ao enviar convites." });
+      } else {
+        setResultadoConvites({ enviados: data.enviados, falhou: data.falhou, total: data.total });
+        if (data.enviados > 0) {
+          setEmailsInput("");
+        }
+      }
+    } catch {
+      setMensagem({ tipo: "erro", texto: "Erro de rede ao enviar convites." });
+    } finally {
+      setEnviandoConvites(false);
+    }
   }
 
   async function publicarAgora() {
@@ -225,9 +259,20 @@ export default function Evento() {
               ✎ Editar dados
             </button>
             {isPublishedStatus(evento.status) && (
-              <Link href={`/cliente/${slug}`} className="eventify-button eventify-button-primary">
-                Ver página pública
-              </Link>
+              <>
+                <button
+                  onClick={() => {
+                    setConvidando(true);
+                    setResultadoConvites(null);
+                  }}
+                  className="eventify-button eventify-button-ghost"
+                >
+                  📧 Convidar por e-mail
+                </button>
+                <Link href={`/cliente/${slug}`} className="eventify-button eventify-button-primary">
+                  Ver página pública
+                </Link>
+              </>
             )}
           </div>
         </div>
@@ -587,6 +632,79 @@ export default function Evento() {
                 className="eventify-button eventify-button-primary"
               >
                 {salvandoEdit ? "Salvando..." : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONVITES POR E-MAIL */}
+      {convidando && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm"
+          onClick={() => !enviandoConvites && setConvidando(false)}
+        >
+          <div
+            className="mt-12 w-full max-w-2xl rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <span className="eventify-kicker">Convidar por e-mail</span>
+                <h2 className="mt-2 font-display text-[32px] italic text-[color:var(--ink)]">
+                  Cola a lista de e-mails
+                </h2>
+                <p className="mt-2 text-[13.5px] text-[color:var(--muted)]">
+                  Cada convidado recebe um e-mail com o link da página pra confirmar presença. Máximo 50 por envio.
+                </p>
+              </div>
+              <button
+                onClick={() => !enviandoConvites && setConvidando(false)}
+                className="text-[20px] text-[color:var(--muted)] hover:text-[color:var(--ink)]"
+                aria-label="Fechar"
+              >
+                ✕
+              </button>
+            </div>
+
+            <textarea
+              value={emailsInput}
+              onChange={(e) => setEmailsInput(e.target.value)}
+              placeholder="maria@email.com&#10;joao@email.com, ana@email.com&#10;pedro@email.com"
+              rows={8}
+              className="w-full rounded-[8px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-[14px] text-[color:var(--ink)] outline-none transition focus:border-[color:var(--ink)] font-mono-tight"
+            />
+            <p className="mt-2 text-[12px] text-[color:var(--muted)]">
+              Separa por vírgula, espaço ou linha nova. Duplicados são ignorados automaticamente.
+            </p>
+
+            {resultadoConvites && (
+              <div
+                className={`mt-4 rounded-md border px-3 py-2.5 text-[13px] ${
+                  resultadoConvites.falhou === 0
+                    ? "border-[color:var(--green,#5B7A4F)] bg-[rgba(91,122,79,0.06)] text-[color:var(--green,#5B7A4F)]"
+                    : "border-[color:var(--gold)] bg-[var(--gold-soft)] text-[color:var(--ink-2)]"
+                }`}
+              >
+                ✓ {resultadoConvites.enviados} de {resultadoConvites.total} enviados
+                {resultadoConvites.falhou > 0 && ` · ${resultadoConvites.falhou} falharam`}
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setConvidando(false)}
+                disabled={enviandoConvites}
+                className="eventify-button eventify-button-ghost"
+              >
+                Fechar
+              </button>
+              <button
+                onClick={enviarConvites}
+                disabled={enviandoConvites || !emailsInput.trim()}
+                className="eventify-button eventify-button-primary"
+              >
+                {enviandoConvites ? "Enviando..." : "Enviar convites →"}
               </button>
             </div>
           </div>
