@@ -4,6 +4,7 @@ dotenv.config({ path: "C:/Users/Win 11/Desktop/eventify/SITE/eventify-ai/.env.lo
 import fs from "fs"
 import path from "path"
 import { GoogleGenAI } from "@google/genai"
+import { checkGeminiQuota, registerGeminiCall } from "../lib/geminiQuota.js"
 
 const PROJETO = "C:/Users/Win 11/Desktop/eventify/SITE/eventify-ai"
 const OBSIDIAN = "C:/Users/Win 11/Desktop/eventify"
@@ -124,10 +125,17 @@ Regras:
 ${resumoArquivos}
 `
 
+const quotaCheckIdx = checkGeminiQuota("indexar-projeto")
+if (!quotaCheckIdx.ok) {
+  console.warn(`[INDEX] ${quotaCheckIdx.message}`)
+  process.exit(0)
+}
+
 const resposta = await ai.models.generateContent({
   model: "gemini-2.5-flash",
   contents: contexto
 })
+registerGeminiCall("indexar-projeto")
 
 const saida = path.join(
   OBSIDIAN,

@@ -75,10 +75,18 @@ Contexto:
 ${contexto}
 `
 
+const { checkGeminiQuota, registerGeminiCall } = await import("../lib/geminiQuota.js")
+const quotaCheckRag = checkGeminiQuota("perguntar-rag")
+if (!quotaCheckRag.ok) {
+  console.warn(`[RAG] ${quotaCheckRag.message}`)
+  process.exit(0)
+}
+
 const resposta = await ai.models.generateContent({
   model: "gemini-2.5-flash",
   contents: prompt
 })
+registerGeminiCall("perguntar-rag")
 
 console.log("")
 console.log("RESPOSTA IA:")

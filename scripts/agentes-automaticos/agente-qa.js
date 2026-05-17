@@ -5,6 +5,7 @@ import { execSync } from "child_process"
 import fs from "fs"
 import path from "path"
 import { GoogleGenAI } from "@google/genai"
+import { checkGeminiQuota, registerGeminiCall } from "../lib/geminiQuota.js"
 
 const PROJETO = "C:/Users/Win 11/Desktop/eventify/SITE/eventify-ai"
 const OBSIDIAN = "C:/Users/Win 11/Desktop/eventify"
@@ -53,6 +54,11 @@ if (!GEMINI_KEY) {
   warnExit("GEMINI_API_KEY / GOOGLE_API_KEY não configurada. Pulando análise IA.")
 }
 
+const quotaCheck = checkGeminiQuota("agente-qa")
+if (!quotaCheck.ok) {
+  warnExit(quotaCheck.message)
+}
+
 const ai = new GoogleGenAI({ apiKey: GEMINI_KEY })
 
 const contexto = `
@@ -95,6 +101,7 @@ try {
     contents: contexto
   })
   respostaTexto = resposta.text || ""
+  registerGeminiCall("agente-qa")
 } catch (err) {
   warnExit(`Falha ao chamar Gemini: ${err.message}`)
 }

@@ -5,6 +5,7 @@ import { execSync } from "child_process"
 import fs from "fs"
 import path from "path"
 import { GoogleGenAI } from "@google/genai"
+import { checkGeminiQuota, registerGeminiCall } from "../lib/geminiQuota.js"
 
 const PROJETO = "C:/Users/Win 11/Desktop/eventify/SITE/eventify-ai"
 const OBSIDIAN = "C:/Users/Win 11/Desktop/eventify"
@@ -82,10 +83,17 @@ ${roadmap}
 ${arquitetura}
 `
 
+const quotaCheck = checkGeminiQuota("agente-arquiteto")
+if (!quotaCheck.ok) {
+  console.warn(`[Arquiteto] ${quotaCheck.message}`)
+  process.exit(0)
+}
+
 const resposta = await ai.models.generateContent({
   model: "gemini-2.5-flash",
   contents: contexto
 })
+registerGeminiCall("agente-arquiteto")
 
 const saida = path.join(
   OBSIDIAN,

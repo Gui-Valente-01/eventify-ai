@@ -4,6 +4,7 @@ dotenv.config({ path: "C:/Users/Win 11/Desktop/eventify/SITE/eventify-ai/.env.lo
 import fs from "fs"
 import path from "path"
 import { GoogleGenAI } from "@google/genai"
+import { checkGeminiQuota, registerGeminiCall } from "./lib/geminiQuota.js"
 
 const OBSIDIAN = "C:\\Users\\Win 11\\Desktop\\eventify"
 const VAULT = path.join(OBSIDIAN, "Eventify")
@@ -155,16 +156,23 @@ ${Object.entries(relatorios).map(([k, v]) => bloco(k, v)).join("\n")}
 
 console.log("[AUTO-EVO] Chamando Gemini...")
 
+const quotaCheckEvo = checkGeminiQuota("auto-evoluir")
 let texto = ""
-try {
-  const resposta = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: contexto
-  })
-  texto = resposta.text || ""
-} catch (err) {
-  console.error("[AUTO-EVO] Falha no Gemini:", err.message)
-  texto = `> Falha ao chamar Gemini: ${err.message}`
+if (!quotaCheckEvo.ok) {
+  console.warn(`[AUTO-EVO] ${quotaCheckEvo.message}`)
+  texto = `> ${quotaCheckEvo.message}`
+} else {
+  try {
+    const resposta = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: contexto
+    })
+    texto = resposta.text || ""
+    registerGeminiCall("auto-evoluir")
+  } catch (err) {
+    console.error("[AUTO-EVO] Falha no Gemini:", err.message)
+    texto = `> Falha ao chamar Gemini: ${err.message}`
+  }
 }
 
 const saida = path.join(PASTA_AUTO_EVO, `Auto Evolucao - ${DATA}.md`)

@@ -5,6 +5,7 @@ import fs from "fs"
 import path from "path"
 import { createClient } from "@supabase/supabase-js"
 import { GoogleGenAI } from "@google/genai"
+import { checkGeminiQuota, registerGeminiCall } from "../lib/geminiQuota.js"
 
 const OBSIDIAN = "C:/Users/Win 11/Desktop/eventify"
 const DATA = new Date().toISOString().slice(0, 10)
@@ -211,6 +212,13 @@ ${JSON.stringify(metricas, null, 2)}
 \`\`\`
 `
 
+const quotaCheckCli = checkGeminiQuota("agente-cliente")
+if (!quotaCheckCli.ok) {
+  console.warn(`[CLI] ${quotaCheckCli.message}`)
+  salvarRelatorio(`> ${quotaCheckCli.message}`)
+  process.exit(0)
+}
+
 let respostaTexto = ""
 try {
   const resposta = await ai.models.generateContent({
@@ -218,6 +226,7 @@ try {
     contents: contexto
   })
   respostaTexto = resposta.text || ""
+  registerGeminiCall("agente-cliente")
 } catch (err) {
   warnExit(`Falha ao chamar Gemini: ${err.message}`)
 }
