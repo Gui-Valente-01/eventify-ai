@@ -73,9 +73,6 @@ export default function PaginaCliente() {
             . O link final dos convidados fica liberado depois da assinatura/publicação.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <a href={`/promocional/${slug}`} className="eventify-button eventify-button-ghost">
-              Ver preview
-            </a>
             <a href="/painel" className="eventify-button eventify-button-primary">
               Publicar no painel <span aria-hidden>→</span>
             </a>

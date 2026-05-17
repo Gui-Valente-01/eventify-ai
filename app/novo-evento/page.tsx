@@ -233,11 +233,11 @@ export default function NovoEvento() {
           tipo: "aviso",
           texto: "Site criado em modo básico. A IA avançada está temporariamente indisponível.",
         });
-        setTimeout(() => router.push(`/evento/${gerarSlug(salvo.nome)}/pronto`), 1500);
+        setTimeout(() => router.push(`/evento/${gerarSlug(salvo.nome)}`), 1500);
         return;
       }
 
-      router.push(`/evento/${gerarSlug(salvo.nome)}/pronto`);
+      router.push(`/evento/${gerarSlug(salvo.nome)}`);
     } catch (error) {
       console.error("[novo-evento] erro inesperado:", error);
       const e = error as { message?: string; code?: string };

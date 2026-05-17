@@ -1,20 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import AiSiteFrame from "@/components/AiSiteFrame";
 import BrandHeader from "@/components/BrandHeader";
 import ShareButtons from "@/components/ShareButtons";
-import { useEventos } from "@/hooks/useEventos";
+import { useEventos, type EventoDados } from "@/hooks/useEventos";
+import { buscarCEP, dataMinimaHoje, mascararCEP } from "@/lib/utils";
+
+const TIPOS_EVENTO = ["Casamento", "Aniversário", "Evento Corporativo", "Festa", "Religioso"] as const;
+const TAMANHO_MAXIMO_IMAGEM = 4 * 1024 * 1024;
 
 export default function Evento() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug as string);
-  const { eventos, isLoading, confirmarPresenca, removerConvidado, encontrarIndexPorSlug } = useEventos();
+  const {
+    eventos,
+    isLoading,
+    confirmarPresenca,
+    removerConvidado,
+    encontrarIndexPorSlug,
+    atualizarEvento,
+  } = useEventos();
 
   const [nomeConvidado, setNomeConvidado] = useState("");
   const [mensagem, setMensagem] = useState<{ tipo: "erro" | "ok"; texto: string } | null>(null);
   const [confirmandoRemocao, setConfirmandoRemocao] = useState<number | null>(null);
+  const [editando, setEditando] = useState(false);
+  const [formEdit, setFormEdit] = useState<EventoDados | null>(null);
+  const [salvandoEdit, setSalvandoEdit] = useState(false);
 
   useEffect(() => {
     if (!mensagem) return;
@@ -50,6 +65,8 @@ export default function Evento() {
       </main>
     );
   }
+
+  const convidados = evento.convidados || [];
 
   function exportarCSV() {
     if (!evento) return;
@@ -98,19 +115,70 @@ export default function Evento() {
     }
   }
 
-  const enderecoCompleto = evento.endereco
-    ? [evento.endereco.rua, evento.endereco.numero, evento.endereco.cidade, evento.endereco.estado]
-        .filter(Boolean)
-        .join(", ")
-    : "";
-  const mapaURL = enderecoCompleto
-    ? `https://www.google.com/maps?q=${encodeURIComponent(enderecoCompleto)}&output=embed`
-    : "";
-  const convidados = evento.convidados || [];
+  function abrirEdicao() {
+    if (!evento) return;
+    setFormEdit({ ...evento });
+    setEditando(true);
+  }
+
+  async function salvarEdicao() {
+    if (!formEdit || indexEvento < 0) return;
+    setSalvandoEdit(true);
+    try {
+      await atualizarEvento(indexEvento, formEdit);
+      setEditando(false);
+      setMensagem({ tipo: "ok", texto: "Dados atualizados!" });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao salvar.";
+      setMensagem({ tipo: "erro", texto: msg });
+    } finally {
+      setSalvandoEdit(false);
+    }
+  }
+
+  function onCEPChange(e: ChangeEvent<HTMLInputElement>) {
+    if (!formEdit) return;
+    const cep = mascararCEP(e.target.value);
+    setFormEdit({ ...formEdit, endereco: { ...(formEdit.endereco || {}), cep } });
+    if (cep.replace(/\D/g, "").length === 8) {
+      buscarCEP(cep).then((dados) => {
+        if (dados && formEdit) {
+          setFormEdit((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  endereco: {
+                    ...(prev.endereco || {}),
+                    cep,
+                    rua: dados.logradouro || prev.endereco?.rua || "",
+                    cidade: dados.localidade || prev.endereco?.cidade || "",
+                    estado: dados.uf || prev.endereco?.estado || "",
+                  },
+                }
+              : prev
+          );
+        }
+      });
+    }
+  }
+
+  function onImagemChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !formEdit) return;
+    if (file.size > TAMANHO_MAXIMO_IMAGEM) {
+      setMensagem({ tipo: "erro", texto: "Imagem muito grande (max 4MB)." });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormEdit({ ...formEdit, imagem: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  }
 
   return (
     <main className="eventify-page">
-      <BrandHeader actions={[{ href: "/painel", label: "Entrar", variant: "ghost" }]} />
+      <BrandHeader actions={[{ href: "/painel", label: "Painel", variant: "ghost" }]} />
       <div className="editorial-wrap py-12 sm:py-16">
         <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -118,87 +186,62 @@ export default function Evento() {
             <h1 className="eventify-title mt-6 text-[clamp(40px,5.4vw,72px)]">{evento.nome}</h1>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/painel" className="eventify-button eventify-button-ghost">
-              ← Painel
-            </Link>
+            <button onClick={abrirEdicao} className="eventify-button eventify-button-ghost">
+              ✎ Editar dados
+            </button>
             <Link href={`/cliente/${slug}`} className="eventify-button eventify-button-primary">
-              Página do cliente
-            </Link>
-            <Link href={`/promocional/${slug}`} className="eventify-button eventify-button-ghost">
-              Site promocional
+              Ver página pública
             </Link>
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)]">
-          <div className="grid gap-10 p-8 lg:grid-cols-[1.4fr_0.9fr] lg:p-12">
-            {/* COLUNA ESQUERDA */}
-            <section className="space-y-6">
-              <div className="overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper-2)]">
-                {evento.imagem ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={evento.imagem} alt={evento.nome} className="h-72 w-full object-cover" />
-                ) : (
-                  <div className="flex h-72 items-center justify-center font-display text-[16px] italic text-[color:var(--muted-2)]">
-                    Sem imagem disponível
-                  </div>
-                )}
+        <div className="grid gap-8 lg:grid-cols-[1.5fr_0.9fr]">
+          {/* COLUNA ESQUERDA — Preview do site */}
+          <section className="space-y-4">
+            <h2 className="font-display text-[20px] italic text-[color:var(--ink)]">
+              Prévia do site dos convidados
+            </h2>
+            {evento.siteHtml ? (
+              <div className="overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
+                <AiSiteFrame html={evento.siteHtml} titulo={evento.nome} />
               </div>
-
-              <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <span className="rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--surface)] px-3.5 py-1.5 text-[11.5px] uppercase tracking-[0.16em] text-[color:var(--ink-2)]">
-                    {evento.tipo}
-                  </span>
-                  <span className="text-[13px] text-[color:var(--muted)] font-mono-tight">
-                    {convidados.length} {convidados.length === 1 ? "convidado" : "convidados"}
-                  </span>
-                </div>
-                <dl className="mt-6 space-y-2.5 text-[15px] text-[color:var(--ink-2)]">
-                  <p>
-                    <span className="mr-2 text-[color:var(--gold)]">●</span>
-                    <strong className="font-medium">Data:</strong> {evento.data}
-                  </p>
-                  {enderecoCompleto && (
-                    <p>
-                      <span className="mr-2 text-[color:var(--gold)]">●</span>
-                      <strong className="font-medium">Endereço:</strong> {enderecoCompleto}
-                    </p>
-                  )}
-                </dl>
-                <div className="mt-6 border-t border-[color:var(--hairline)] pt-5">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--gold)]">
-                    Compartilhar com convidados
-                  </p>
-                  <ShareButtons
-                    url={typeof window !== "undefined" ? `${window.location.origin}/cliente/${slug}` : ""}
-                    titulo={`Convite: ${evento.nome}`}
-                    className="mt-4"
-                  />
-                </div>
+            ) : (
+              <div className="rounded-[10px] border border-dashed border-[color:var(--hairline)] bg-[color:var(--paper-2)] p-12 text-center text-[color:var(--muted)]">
+                <p>Site ainda não foi gerado.</p>
+                <Link href="/painel" className="eventify-button eventify-button-ghost mt-4">
+                  Voltar ao painel
+                </Link>
               </div>
+            )}
+          </section>
 
-              {mapaURL && (
-                <div className="overflow-hidden rounded-[10px] border border-[color:var(--hairline)]">
-                  <iframe src={mapaURL} width="100%" height="320" style={{ border: 0 }} loading="lazy" />
-                </div>
-              )}
-            </section>
+          {/* COLUNA DIREITA — Convidados e compartilhar */}
+          <aside className="space-y-6">
+            <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--gold)]">
+                Compartilhar com convidados
+              </p>
+              <ShareButtons
+                url={typeof window !== "undefined" ? `${window.location.origin}/cliente/${slug}` : ""}
+                titulo={`Convite: ${evento.nome}`}
+                className="mt-4"
+              />
+            </div>
 
-            {/* COLUNA DIREITA */}
-            <aside className="space-y-6 rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
-              <div>
-                <h2 className="font-display text-[28px] italic tracking-[-0.01em] text-[color:var(--ink)]">
-                  Confirmar presença
+            <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-display text-[24px] italic tracking-[-0.01em] text-[color:var(--ink)]">
+                  Convidados confirmados
                 </h2>
-                <p className="mt-2 text-[13.5px] text-[color:var(--muted)]">
-                  Digite seu nome para adicionar à lista de convidados.
-                </p>
+                <span className="font-mono-tight text-[13px] text-[color:var(--muted)]">
+                  {convidados.length}
+                </span>
               </div>
-              <div className="space-y-4">
+
+              <div className="mt-5 space-y-3">
                 <input
                   type="text"
-                  placeholder="Seu nome completo"
+                  placeholder="Adicionar convidado manualmente"
                   value={nomeConvidado}
                   onChange={(e) => setNomeConvidado(e.target.value)}
                   onKeyDown={(e) => {
@@ -211,9 +254,9 @@ export default function Evento() {
                 />
                 <button
                   onClick={adicionarPresenca}
-                  className="eventify-button eventify-button-primary w-full justify-center"
+                  className="eventify-button eventify-button-ghost w-full justify-center"
                 >
-                  Confirmar presença
+                  + Adicionar
                 </button>
                 {mensagem && (
                   <p
@@ -228,23 +271,20 @@ export default function Evento() {
                 )}
               </div>
 
-              <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-[10.5px] uppercase tracking-[0.18em] text-[color:var(--gold)]">
-                    Convidados
-                  </p>
-                  {convidados.length > 0 && (
+              <div className="mt-5">
+                {convidados.length > 0 && (
+                  <div className="mb-3 flex justify-end">
                     <button
                       type="button"
                       onClick={exportarCSV}
                       className="rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--paper)] px-3 py-1 text-[11px] text-[color:var(--ink)] transition hover:border-[color:var(--ink)]"
                     >
-                      ↓ CSV
+                      ↓ Baixar CSV
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
                 {convidados.length > 0 ? (
-                  <ul className="mt-4 space-y-2">
+                  <ul className="space-y-2">
                     {convidados.map((nome, index) => (
                       <li
                         key={`${nome}-${index}`}
@@ -278,15 +318,204 @@ export default function Evento() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-4 text-[13px] text-[color:var(--muted)]">
-                    Nenhum convidado confirmado ainda.
+                  <p className="text-[13px] text-[color:var(--muted)]">
+                    Nenhum convidado confirmado ainda. Compartilhe o link acima para começar a receber presenças.
                   </p>
                 )}
               </div>
-            </aside>
-          </div>
+            </div>
+          </aside>
         </div>
       </div>
+
+      {/* MODAL DE EDIÇÃO */}
+      {editando && formEdit && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm"
+          onClick={() => !salvandoEdit && setEditando(false)}
+        >
+          <div
+            className="mt-12 w-full max-w-2xl rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <span className="eventify-kicker">Editar evento</span>
+                <h2 className="mt-2 font-display text-[32px] italic text-[color:var(--ink)]">
+                  Dados básicos
+                </h2>
+              </div>
+              <button
+                onClick={() => !salvandoEdit && setEditando(false)}
+                className="text-[20px] text-[color:var(--muted)] hover:text-[color:var(--ink)]"
+                aria-label="Fechar"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                  Nome do evento
+                </label>
+                <input
+                  type="text"
+                  value={formEdit.nome}
+                  onChange={(e) => setFormEdit({ ...formEdit, nome: e.target.value })}
+                  className="eventify-input"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                    Tipo
+                  </label>
+                  <select
+                    value={formEdit.tipo}
+                    onChange={(e) => setFormEdit({ ...formEdit, tipo: e.target.value })}
+                    className="eventify-input"
+                  >
+                    {TIPOS_EVENTO.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                    Data
+                  </label>
+                  <input
+                    type="date"
+                    value={formEdit.data || ""}
+                    min={dataMinimaHoje()}
+                    onChange={(e) => setFormEdit({ ...formEdit, data: e.target.value })}
+                    className="eventify-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                  CEP
+                </label>
+                <input
+                  type="text"
+                  value={formEdit.endereco?.cep || ""}
+                  onChange={onCEPChange}
+                  placeholder="00000-000"
+                  className="eventify-input"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+                <div>
+                  <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                    Rua
+                  </label>
+                  <input
+                    type="text"
+                    value={formEdit.endereco?.rua || ""}
+                    onChange={(e) =>
+                      setFormEdit({
+                        ...formEdit,
+                        endereco: { ...(formEdit.endereco || {}), rua: e.target.value },
+                      })
+                    }
+                    className="eventify-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                    Número
+                  </label>
+                  <input
+                    type="text"
+                    value={formEdit.endereco?.numero || ""}
+                    onChange={(e) =>
+                      setFormEdit({
+                        ...formEdit,
+                        endereco: { ...(formEdit.endereco || {}), numero: e.target.value },
+                      })
+                    }
+                    className="eventify-input"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+                <div>
+                  <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                    Cidade
+                  </label>
+                  <input
+                    type="text"
+                    value={formEdit.endereco?.cidade || ""}
+                    onChange={(e) =>
+                      setFormEdit({
+                        ...formEdit,
+                        endereco: { ...(formEdit.endereco || {}), cidade: e.target.value },
+                      })
+                    }
+                    className="eventify-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                    Estado
+                  </label>
+                  <input
+                    type="text"
+                    value={formEdit.endereco?.estado || ""}
+                    maxLength={2}
+                    onChange={(e) =>
+                      setFormEdit({
+                        ...formEdit,
+                        endereco: { ...(formEdit.endereco || {}), estado: e.target.value.toUpperCase() },
+                      })
+                    }
+                    className="eventify-input uppercase"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[12px] uppercase tracking-[0.14em] text-[color:var(--muted)] mb-1.5">
+                  Imagem (máx 4MB)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onImagemChange}
+                  className="block w-full text-[13px] text-[color:var(--ink-2)] file:mr-3 file:rounded-md file:border file:border-[color:var(--hairline)] file:bg-[color:var(--paper)] file:px-3 file:py-1.5 file:text-[12px] file:text-[color:var(--ink)]"
+                />
+                {formEdit.imagem && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={formEdit.imagem} alt="" className="mt-3 h-32 rounded-md object-cover" />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end gap-3">
+              <button
+                onClick={() => setEditando(false)}
+                disabled={salvandoEdit}
+                className="eventify-button eventify-button-ghost"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={salvarEdicao}
+                disabled={salvandoEdit}
+                className="eventify-button eventify-button-primary"
+              >
+                {salvandoEdit ? "Salvando..." : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -339,7 +339,7 @@ function PainelInner() {
                       </div>
 
                       {/* Nome + tipo + template */}
-                      <Link href={`/evento/${slug}/pronto`} className="min-w-0">
+                      <Link href={`/evento/${slug}`} className="min-w-0">
                         <div className="truncate text-[14px] font-medium text-[color:var(--ink)] group-hover:text-[color:var(--ink)]">
                           {evento.nome}
                         </div>
@@ -396,18 +396,10 @@ function PainelInner() {
                               aria-label="Fechar menu"
                             />
                             <div className="absolute right-0 top-full z-40 mt-1 w-[210px] rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--surface)] py-1 shadow-[0_20px_40px_-20px_rgba(40,30,10,0.18)]">
-                              <MenuLink href={`/evento/${slug}/pronto`}>Abrir editor</MenuLink>
-                              <MenuLink href={`/personalizar/${slug}`}>Personalizar cores</MenuLink>
-                              <MenuLink href={`/evento/${slug}`}>Página do evento</MenuLink>
-                              {publicado ? (
-                                <MenuLink href={`/cliente/${slug}`}>Página do cliente</MenuLink>
-                              ) : (
-                                <MenuLink href={`/promocional/${slug}`}>Ver prévia</MenuLink>
+                              <MenuLink href={`/evento/${slug}`}>Abrir página do evento</MenuLink>
+                              {publicado && (
+                                <MenuLink href={`/cliente/${slug}`}>Ver página dos convidados</MenuLink>
                               )}
-                              <MenuLink href={`/editar-evento/${slug}`}>Editar briefing</MenuLink>
-                              <MenuButton onClick={() => regenerarSite(realIndex)} disabled={!!regenerandoId}>
-                                {isRegenerando ? "Regenerando..." : "✦ Regenerar com IA"}
-                              </MenuButton>
                               {!publicado && (
                                 <MenuButton onClick={() => publicarEvento(realIndex)} disabled={!!publicandoId} primary>
                                   {isPublicando ? "Abrindo checkout..." : "Assinar & publicar"}

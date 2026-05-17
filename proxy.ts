@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, isSupabaseConfigured } from "@/lib/supabase/config";
 
-const ROTAS_PROTEGIDAS = ["/painel", "/novo-evento", "/editar-evento", "/evento"];
+const ROTAS_PROTEGIDAS = ["/painel", "/novo-evento", "/evento"];
 
 export async function proxy(request: NextRequest) {
   if (!isSupabaseConfigured) return NextResponse.next();
