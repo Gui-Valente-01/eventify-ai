@@ -69,6 +69,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Evento não encontrado ou sem permissão." }, { status: 404 });
     }
 
+    // Anti-double-charge: se evento já está pago/publicado, não abrir nova sessão Stripe
+    if (data.status === "paid" || data.status === "published") {
+      return NextResponse.json(
+        {
+          error: "Este evento já está publicado. Verifique o painel.",
+          alreadyPublished: true,
+          eventId: data.id,
+        },
+        { status: 409 }
+      );
+    }
+
     evento = data as { id: string; slug: string; nome: string };
   }
 
