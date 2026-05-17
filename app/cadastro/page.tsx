@@ -13,6 +13,7 @@ export default function CadastroPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [aceitouTermos, setAceitouTermos] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -31,6 +32,11 @@ export default function CadastroPage() {
 
     if (senha.length < 6) {
       setErro("A senha precisa ter ao menos 6 caracteres.");
+      return;
+    }
+
+    if (!aceitouTermos) {
+      setErro("Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.");
       return;
     }
 
@@ -151,6 +157,27 @@ export default function CadastroPage() {
                 />
               </label>
 
+              <label className="flex items-start gap-2.5 mt-1">
+                <input
+                  type="checkbox"
+                  checked={aceitouTermos}
+                  onChange={(e) => setAceitouTermos(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 cursor-pointer accent-[color:var(--ink)]"
+                  required
+                />
+                <span className="text-[12px] leading-[1.55] text-[color:var(--muted)]">
+                  Li e aceito os{" "}
+                  <Link href="/termos" target="_blank" className="text-[color:var(--ink-2)] underline hover:text-[color:var(--ink)]">
+                    Termos de Uso
+                  </Link>{" "}
+                  e a{" "}
+                  <Link href="/privacidade" target="_blank" className="text-[color:var(--ink-2)] underline hover:text-[color:var(--ink)]">
+                    Política de Privacidade
+                  </Link>
+                  .
+                </span>
+              </label>
+
               {erro && (
                 <p className="border-y border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] px-3 py-2.5 text-[12.5px] text-[color:var(--rose,#A85462)]">
                   {erro}
@@ -164,8 +191,8 @@ export default function CadastroPage() {
 
               <button
                 type="submit"
-                disabled={carregando}
-                className="eventify-button eventify-button-primary mt-1 w-full justify-center disabled:opacity-70"
+                disabled={carregando || !aceitouTermos}
+                className="eventify-button eventify-button-primary mt-1 w-full justify-center disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {carregando ? (
                   <>
@@ -187,9 +214,17 @@ export default function CadastroPage() {
         </div>
 
         <p className="text-[11.5px] text-[color:var(--muted-2)]">
-          Ao continuar você aceita os{" "}
-          <a className="text-[color:var(--muted)] underline-offset-2 hover:underline">Termos</a> e a{" "}
-          <a className="text-[color:var(--muted)] underline-offset-2 hover:underline">Política de privacidade</a>.
+          <Link href="/termos" className="text-[color:var(--muted)] underline-offset-2 hover:underline">
+            Termos
+          </Link>{" "}
+          ·{" "}
+          <Link href="/privacidade" className="text-[color:var(--muted)] underline-offset-2 hover:underline">
+            Privacidade
+          </Link>{" "}
+          ·{" "}
+          <a href="mailto:contato@eventify.app" className="text-[color:var(--muted)] underline-offset-2 hover:underline">
+            Suporte
+          </a>
         </p>
       </div>
 
