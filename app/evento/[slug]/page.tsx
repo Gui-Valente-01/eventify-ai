@@ -8,6 +8,8 @@ import BrandHeader from "@/components/BrandHeader";
 import ShareButtons from "@/components/ShareButtons";
 import { useEventos, type EventoDados } from "@/hooks/useEventos";
 import { buscarCEP, dataMinimaHoje, mascararCEP } from "@/lib/utils";
+import { isPublishedStatus, getStatusLabel } from "@/lib/publication";
+import { getSelectedPlanFromEvento, normalizePlanId } from "@/lib/planStrategy";
 
 const TIPOS_EVENTO = ["Casamento", "Aniversário", "Evento Corporativo", "Festa", "Religioso"] as const;
 const TAMANHO_MAXIMO_IMAGEM = 4 * 1024 * 1024;
@@ -30,6 +32,7 @@ export default function Evento() {
   const [editando, setEditando] = useState(false);
   const [formEdit, setFormEdit] = useState<EventoDados | null>(null);
   const [salvandoEdit, setSalvandoEdit] = useState(false);
+  const [publicando, setPublicando] = useState(false);
 
   useEffect(() => {
     if (!mensagem) return;
@@ -121,6 +124,38 @@ export default function Evento() {
     setEditando(true);
   }
 
+  async function publicarAgora() {
+    if (!evento?.id || publicando) return;
+    setPublicando(true);
+    setMensagem(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: normalizePlanId(getSelectedPlanFromEvento(evento)),
+          eventId: evento.id,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMensagem({ tipo: "erro", texto: data.error || "Não foi possível iniciar o checkout." });
+      } else if (data.url) {
+        window.location.assign(data.url);
+        return;
+      } else {
+        setMensagem({
+          tipo: "erro",
+          texto: data.message || "Configure o Stripe para ativar assinatura e publicação.",
+        });
+      }
+    } catch {
+      setMensagem({ tipo: "erro", texto: "Erro de rede ao iniciar checkout." });
+    } finally {
+      setPublicando(false);
+    }
+  }
+
   async function salvarEdicao() {
     if (!formEdit || indexEvento < 0) return;
     setSalvandoEdit(true);
@@ -189,10 +224,51 @@ export default function Evento() {
             <button onClick={abrirEdicao} className="eventify-button eventify-button-ghost">
               ✎ Editar dados
             </button>
-            <Link href={`/cliente/${slug}`} className="eventify-button eventify-button-primary">
-              Ver página pública
-            </Link>
+            {isPublishedStatus(evento.status) && (
+              <Link href={`/cliente/${slug}`} className="eventify-button eventify-button-primary">
+                Ver página pública
+              </Link>
+            )}
           </div>
+        </div>
+
+        {/* STATUS + CTA DE PUBLICAÇÃO */}
+        <div
+          className={`mb-8 flex flex-col gap-4 rounded-[12px] border p-5 sm:flex-row sm:items-center sm:justify-between ${
+            isPublishedStatus(evento.status)
+              ? "border-[color:var(--green,#5B7A4F)]/30 bg-[rgba(91,122,79,0.05)]"
+              : "border-[color:var(--gold)] bg-[var(--gold-soft)]"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-block h-2.5 w-2.5 rounded-full ${
+                isPublishedStatus(evento.status)
+                  ? "bg-[color:var(--green,#5B7A4F)]"
+                  : "bg-[color:var(--gold)]"
+              }`}
+            />
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                Status
+              </p>
+              <p className="font-display text-[20px] italic text-[color:var(--ink)]">
+                {getStatusLabel(evento.status)}
+                {isPublishedStatus(evento.status) && " — link ativo para convidados"}
+                {evento.status === "preview" && " — falta publicar"}
+                {evento.status === "draft" && " — rascunho, ainda não pronto"}
+              </p>
+            </div>
+          </div>
+          {!isPublishedStatus(evento.status) && (
+            <button
+              onClick={publicarAgora}
+              disabled={publicando}
+              className="eventify-button eventify-button-primary text-[15px]"
+            >
+              {publicando ? "Abrindo checkout..." : "✦ Assinar & Publicar"}
+            </button>
+          )}
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1.5fr_0.9fr]">
