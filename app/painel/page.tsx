@@ -291,9 +291,9 @@ function PainelInner() {
               className="mx-auto max-w-2xl"
             />
           ) : (
-            <div className="overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--surface)]">
+            <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--surface)]">
               {/* Header */}
-              <div className="grid grid-cols-[56px_1.6fr_1fr_1.1fr_0.9fr_0.9fr_40px] items-center gap-3 border-b border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-2.5 text-[10.5px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
+              <div className="grid grid-cols-[56px_1.6fr_1fr_1.1fr_0.9fr_0.9fr_40px] items-center gap-3 rounded-t-[10px] border-b border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-2.5 text-[10.5px] uppercase tracking-[0.14em] text-[color:var(--muted)]">
                 <span />
                 <span>Evento</span>
                 <span>Data</span>
