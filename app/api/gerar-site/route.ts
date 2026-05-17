@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { EventoDados } from "@/lib/siteAgent";
 import { runAgentCompany } from "@/lib/agents/orchestrator";
 import type { AgentRunSummary } from "@/lib/agents/types";
@@ -7,6 +7,12 @@ import { calcularCustoUSD, type TokenUsage } from "@/lib/aiPricing";
 import { checkPodeCriarEvento, checkPodeRegenerar } from "@/lib/planLimits";
 import { logger } from "@/lib/logger";
 import { generateSite } from "@/lib/siteGenerators";
+import {
+  createJob,
+  markRunning,
+  markDone,
+  markFailed,
+} from "@/lib/jobs/generationJobs";
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
@@ -87,7 +93,6 @@ async function validateLimits(
   const supabase = await getSupabaseServerClient();
   if (!supabase) return { ok: true };
 
-  // Rate-limit: máx N chamadas/usuário em janela curta
   const desdeISO = new Date(Date.now() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
   const { count: recentCount } = await supabase
     .from("usage_logs")
@@ -105,7 +110,6 @@ async function validateLimits(
     };
   }
 
-  // Se NÃO tem evento.id, é criação nova → checa max_eventos
   if (!evento.id) {
     const { count: eventosCount } = await supabase
       .from("eventos")
@@ -121,7 +125,6 @@ async function validateLimits(
       };
     }
   } else {
-    // Se tem evento.id, é regeneração → checa limite por evento
     const { count: regenCount } = await supabase
       .from("usage_logs")
       .select("id", { count: "exact", head: true })
@@ -189,13 +192,43 @@ async function logUsage(args: {
   }
 }
 
+type GenerationResult = {
+  siteGerado: unknown;
+  siteHtml: string | null;
+  agentRun: unknown;
+  quality: unknown;
+  business: unknown;
+  aiAvailable: boolean;
+  model: string;
+  plan: Plan;
+};
+
+async function executeGeneration(
+  evento: EventoDados,
+  model: string,
+  plan: Plan,
+  userId: string | null
+): Promise<GenerationResult> {
+  const localRun = runAgentCompany(evento);
+  const result = await generateSite(evento, model, plan, userId, localRun, logUsage);
+  return {
+    siteGerado: result.siteGerado,
+    siteHtml: result.siteHtml,
+    agentRun: result.agentRun,
+    quality: result.quality,
+    business: result.business,
+    aiAvailable: result.aiAvailable,
+    model: result.modelUsed,
+    plan: result.plan,
+  };
+}
+
 export async function POST(req: Request) {
   const t0 = Date.now();
   const tlog = (label: string) => {
     logger.info("gerar-site:timing", label, { elapsedMs: Date.now() - t0 });
   };
 
-  // ----- Validação de entrada -----
   const requestValidation = await validateRequest(req);
   if (!requestValidation.ok) {
     return NextResponse.json(
@@ -209,7 +242,6 @@ export async function POST(req: Request) {
   const { model, plan, userId } = await resolveContext();
   tlog("after-resolveContext");
 
-  // ----- Validação de limites por plano + rate-limit (server-side) -----
   const limitsValidation = await validateLimits(evento, userId, plan);
   if (!limitsValidation.ok) {
     return NextResponse.json(
@@ -218,23 +250,50 @@ export async function POST(req: Request) {
     );
   }
 
-  tlog("before-localRun");
-  const localRun = runAgentCompany(evento);
-  tlog("after-localRun");
+  if (!userId) {
+    tlog("anonymous-inline");
+    const result = await executeGeneration(evento, model, plan, userId);
+    tlog("after-anonymous-inline");
+    return NextResponse.json({
+      ...result,
+      promoData: result.siteGerado,
+    });
+  }
 
-  tlog("before-generateSite");
-  const result = await generateSite(evento, model, plan, userId, localRun, logUsage);
-  tlog("after-generateSite");
+  let job = null;
+  try {
+    job = await createJob({
+      userId,
+      eventoId: evento.id ?? null,
+      input: evento as unknown,
+    });
+  } catch (e) {
+    logger.warn("gerar-site", "createJob falhou, fallback inline", { userId, error: String(e) });
+  }
 
-  return NextResponse.json({
-    siteGerado: result.siteGerado,
-    siteHtml: result.siteHtml,
-    promoData: result.siteGerado,
-    agentRun: result.agentRun,
-    quality: result.quality,
-    business: result.business,
-    aiAvailable: result.aiAvailable,
-    model: result.modelUsed,
-    plan: result.plan,
+  if (!job) {
+    const result = await executeGeneration(evento, model, plan, userId);
+    return NextResponse.json({
+      ...result,
+      promoData: result.siteGerado,
+    });
+  }
+
+  const jobId = job.id;
+
+  after(async () => {
+    try {
+      await markRunning(jobId);
+      const result = await executeGeneration(evento, model, plan, userId);
+      await markDone(jobId, result);
+      logger.info("gerar-site", "job concluído", { jobId, ms: Date.now() - t0 });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      logger.error("gerar-site", "job falhou", e, { jobId });
+      await markFailed(jobId, msg);
+    }
   });
+
+  tlog("after-job-kicked-off");
+  return NextResponse.json({ jobId, status: "pending" });
 }
