@@ -12,6 +12,10 @@ type Body = {
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Aceita sessionId razoável: 16-100 chars alfanumérico + dash/underscore.
+ *  Cobre UUIDs v4 e qualquer fallback razoável de client (anti-iOS antigo).
+ */
+const SESSION_RE = /^[A-Za-z0-9_-]{16,100}$/;
 
 export async function POST(req: Request) {
   let body: Body;
@@ -22,7 +26,7 @@ export async function POST(req: Request) {
   }
 
   const sessionId = (body.sessionId || "").trim();
-  if (!sessionId || !UUID_RE.test(sessionId)) {
+  if (!sessionId || !SESSION_RE.test(sessionId)) {
     return NextResponse.json({ error: "sessionId inválido" }, { status: 400 });
   }
 

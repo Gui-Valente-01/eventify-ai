@@ -4,15 +4,39 @@ import { useEffect } from "react";
 
 const SESSION_KEY = "eventify_session_id";
 
+/** Gera UUID v4 válido sem depender de crypto.randomUUID (que falha em iOS < 15.4 e HTTP). */
+function uuidV4(): string {
+  // Tenta crypto.randomUUID (caminho moderno, contexto seguro)
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      // segue pro fallback
+    }
+  }
+  // Tenta crypto.getRandomValues (funciona em iOS antigo e HTTP)
+  if (typeof crypto !== "undefined" && "getRandomValues" in crypto) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // versão 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // variante RFC 4122
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+  }
+  // Último recurso: Math.random (UUID válido mas previsível — só usado em browsers exóticos)
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return "";
   try {
     const existing = window.sessionStorage.getItem(SESSION_KEY);
     if (existing) return existing;
-    const id =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+    const id = uuidV4();
     window.sessionStorage.setItem(SESSION_KEY, id);
     return id;
   } catch {
