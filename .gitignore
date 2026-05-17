@@ -43,3 +43,6 @@ next-env.d.ts
 # editor
 .vscode/
 .gemini-quota.json
+
+# email preview (gerado em dev)
+preview-email.html

@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
 import type { PlanId } from "@/lib/plans";
 import { verifyStripeSignature } from "@/lib/stripeWebhook";
+import { enviarEmail } from "@/lib/email/resend";
+import { templateBoasVindas } from "@/lib/email/templates";
 
 export const runtime = "nodejs";
 
@@ -98,8 +100,10 @@ export async function POST(req: Request) {
             .eq("id", userId);
           if (error) throw error;
         }
+        let eventoSlug: string | null = null;
+        let eventoNome: string | null = null;
         if (eventId) {
-          const { error } = await admin
+          const { data: eventoAtualizado, error } = await admin
             .from("eventos")
             .update({
               status: "published",
@@ -107,14 +111,43 @@ export async function POST(req: Request) {
               published_at: new Date().toISOString(),
               paid_plan: plan || null,
             })
-            .eq("id", eventId);
+            .eq("id", eventId)
+            .select("slug, nome")
+            .maybeSingle();
           if (error) throw error;
+          eventoSlug = eventoAtualizado?.slug ?? null;
+          eventoNome = eventoAtualizado?.nome ?? null;
         }
         logger.info("stripe-webhook", "checkout.session.completed processado", {
           userId,
           eventId,
           plan,
         });
+
+        // ===== E-mail de boas-vindas (fire-and-forget, nunca quebra fluxo) =====
+        if (userId && eventoSlug && eventoNome) {
+          try {
+            const { data: userData } = await admin.auth.admin.getUserById(userId);
+            const email = userData?.user?.email;
+            const nomeUsuario = (userData?.user?.user_metadata as { full_name?: string } | undefined)?.full_name || "";
+            if (email) {
+              const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://eventify.app";
+              const { subject, html, text } = templateBoasVindas({
+                nomeUsuario,
+                nomeEvento: eventoNome,
+                slug: eventoSlug,
+                appUrl,
+              });
+              await enviarEmail({ to: email, subject, html, text });
+            }
+          } catch (emailErr) {
+            logger.error("stripe-webhook", "falha ao enviar e-mail de boas-vindas", emailErr, {
+              userId,
+              eventId,
+            });
+            // Não retorna erro — webhook deve sempre retornar 200 pra Stripe não retentar
+          }
+        }
       } catch (err) {
         logger.error("stripe-webhook", "falha ao atualizar Supabase após pagamento", err, {
           userId,
