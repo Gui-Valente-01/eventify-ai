@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventify AI Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 24px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    h1 { margin: 0; font-size: 24px; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .meta .stale { color: var(--warn); font-weight: 600; }
+    .meta .fresh { color: var(--ok); }
+    .meta .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      margin-right: 6px;
+      vertical-align: middle;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--card);
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+    .card h2 {
+      margin: 0 0 12px 0;
+      font-size: 15px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #334155;
+      font-size: 14px;
+    }
+    .row:last-child { border-bottom: none; }
+    .row .label { color: var(--muted); }
+    .status { font-weight: 600; }
+    .status.ok    { color: var(--ok); }
+    .status.warn  { color: var(--warn); }
+    .status.err   { color: var(--err); }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .chip {
+      background: #0ea5e9;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .chip.empty {
+      background: transparent;
+      color: var(--muted);
+      border: 1px dashed #475569;
+    }
+    pre {
+      white-space: pre-wrap;
+      font-size: 12px;
+      max-height: 320px;
+      overflow-y: auto;
+      margin: 0;
+      padding: 10px;
+      background: #0b1220;
+      border-radius: 8px;
+      color: #cbd5e1;
+    }
+    .err-banner {
+      background: #7f1d1d;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>🧠 Eventify AI Dashboard</h1>
+      <div class="meta">
+        <span class="dot"></span>
+        <span id="freshness" class="fresh">Carregando…</span>
+        · Última atualização: <span id="atualizadoEm">—</span>
+        · Próxima checagem em <span id="countdown">15</span>s
+      </div>
+    </div>
+  </header>
+
+  <div id="erro" class="err-banner">⚠ Falha ao carregar dados.json — o watcher está rodando?</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Sistema</h2>
+      <div class="row"><span class="label">RAG</span><span id="sysRag" class="status">—</span></div>
+      <div class="row"><span class="label">Gemini</span><span id="sysGemini" class="status">—</span></div>
+      <div class="row"><span class="label">Supabase</span><span id="sysSupabase" class="status">—</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Agentes que rodaram hoje</h2>
+      <div id="agentesHoje" class="chips"><span class="chip empty">nenhum ainda</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Últimos arquivos</h2>
+      <div class="row"><span class="label">Auto-evolução</span><span id="ultAutoEvo">—</span></div>
+      <div class="row"><span class="label">Status GitHub</span><span id="ultGithub">—</span></div>
+      <div class="row"><span class="label">Agente automático</span><span id="ultAgente">—</span></div>
+      <div class="row"><span class="label">Prompt Claude</span><span id="ultPrompt">—</span></div>
+    </div>
+
+    <div class="card" style="grid-column: 1 / -1;">
+      <h2>Última auto-evolução (Gemini)</h2>
+      <pre id="autoEvoConteudo">Carregando…</pre>
+    </div>
+
+    <div class="card" style="grid-column: 1 / -1;">
+      <h2>Último relatório de agente</h2>
+      <pre id="agenteConteudo">Carregando…</pre>
+    </div>
+  </div>
+
+  <script>
+    const POLL_MS = 15000
+    let countdown = POLL_MS / 1000
+
+    const STATUS_CLASS = { ONLINE: "ok", CONFIGURADO: "ok", INDISPONIVEL: "err", "SEM CHAVE": "warn", indeterminado: "warn" }
+
+    function setStatus(id, valor) {
+      const el = document.getElementById(id)
+      el.textContent = valor
+      el.className = "status " + (STATUS_CLASS[valor] || "warn")
+    }
+
+    function fmtFreshness(iso) {
+      if (!iso) return ["—", "warn"]
+      const diff = (Date.now() - new Date(iso).getTime()) / 1000
+      if (diff < 60) return [`${Math.round(diff)}s atrás`, "fresh"]
+      if (diff < 300) return [`${Math.round(diff / 60)}min atrás`, "fresh"]
+      if (diff < 1800) return [`${Math.round(diff / 60)}min atrás`, "stale"]
+      return [`${Math.round(diff / 3600)}h atrás (desatualizado)`, "stale"]
+    }
+
+    async function carregar() {
+      try {
+        const r = await fetch("./dados.json?t=" + Date.now())
+        if (!r.ok) throw new Error("HTTP " + r.status)
+        const d = await r.json()
+        document.getElementById("erro").style.display = "none"
+
+        const [texto, classe] = fmtFreshness(d.atualizadoEm)
+        const f = document.getElementById("freshness")
+        f.textContent = texto
+        f.className = classe
+        document.getElementById("atualizadoEm").textContent = d.atualizadoEmLocal || "—"
+
+        setStatus("sysRag", d.sistema?.rag || "—")
+        setStatus("sysGemini", d.sistema?.gemini || "—")
+        setStatus("sysSupabase", d.sistema?.supabase || "—")
+
+        const chips = document.getElementById("agentesHoje")
+        if (Array.isArray(d.agentesHoje) && d.agentesHoje.length) {
+          chips.innerHTML = d.agentesHoje.map((a) => `<span class="chip">${a}</span>`).join("")
+        } else {
+          chips.innerHTML = '<span class="chip empty">nenhum ainda</span>'
+        }
+
+        document.getElementById("ultAutoEvo").textContent = d.arquivos?.ultimaAutoEvolucao || "—"
+        document.getElementById("ultGithub").textContent = d.arquivos?.ultimoGitHub || "—"
+        document.getElementById("ultAgente").textContent = d.arquivos?.ultimoAgente || "—"
+        document.getElementById("ultPrompt").textContent = d.arquivos?.ultimoPromptClaude || "—"
+
+        document.getElementById("autoEvoConteudo").textContent = d.conteudo?.autoEvolucao || "Nenhuma."
+        document.getElementById("agenteConteudo").textContent = d.conteudo?.agente || "Nenhum."
+      } catch (e) {
+        document.getElementById("erro").style.display = "block"
+        document.getElementById("erro").textContent = "⚠ Falha ao carregar dados.json — " + e.message
+      }
+    }
+
+    function tick() {
+      countdown--
+      if (countdown <= 0) {
+        countdown = POLL_MS / 1000
+        carregar()
+      }
+      document.getElementById("countdown").textContent = countdown
+    }
+
+    carregar()
+    setInterval(tick, 1000)
+  </script>
+</body>
+</html>

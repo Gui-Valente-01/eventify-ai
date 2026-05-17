@@ -10,13 +10,27 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "health-check": "tsx scripts/health-check.ts"
+    "health-check": "tsx scripts/health-check.ts",
+    "qa": "node scripts/agentes-automaticos/agente-qa.js",
+    "qa:blocking": "node -e \"process.env.QA_MODE='blocking';process.env.QA_BLOCK_LEVEL='critical';require('child_process').execSync('node scripts/agentes-automaticos/agente-qa.js',{stdio:'inherit'})\"",
+    "cto": "node scripts/agentes-automaticos/agente-cto.js",
+    "arquiteto": "node scripts/agentes-automaticos/agente-arquiteto.js",
+    "produto": "node scripts/agentes-automaticos/agente-produto.js",
+    "cliente": "node scripts/agentes-automaticos/agente-cliente.js",
+    "dashboard:atualizar": "node scripts/agentes-automaticos/atualizar-dashboard-operacional.js",
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run lint",
+    "pre-push": "npm run health-check -- --skip-build && npm run qa:blocking"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.92.0",
     "@google/genai": "^1.52.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.3",
+    "chokidar": "^5.0.0",
+    "dotenv": "^17.4.2",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -29,6 +43,7 @@
     "@vitest/coverage-v8": "^4.1.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "simple-git-hooks": "^2.13.1",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5",

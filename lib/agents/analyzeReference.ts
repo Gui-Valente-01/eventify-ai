@@ -213,7 +213,7 @@ function fallbackProfile(descricao?: string): ReferenceProfile {
   let paleta = ["#F5EDE2", "#E8D4C3", "#B7895C", "#2B1D17", "#C8A96A"];
   let fontDisplay: "serif" | "sans-serif" | "display" = "serif";
   let fontDisplayId = "cormorant-garamond";
-  let fontBodyId = "inter";
+  const fontBodyId = "inter";
 
   if (desc.match(/(luxo|premium|opulent|caro|sofistic)/)) {
     vibe = "luxo";
