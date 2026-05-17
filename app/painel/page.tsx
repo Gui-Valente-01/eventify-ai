@@ -11,7 +11,8 @@ import { gerarSiteAPI } from "@/lib/api";
 import { getStatusLabel, isPublishedStatus } from "@/lib/publication";
 import Spinner from "@/components/Spinner";
 import EmptyState from "@/components/EmptyState";
-import { getPlanDisplayName, getSelectedPlanFromEvento, normalizePlanId } from "@/lib/planStrategy";
+import OnboardingWelcome from "@/components/OnboardingWelcome";
+import { getSelectedPlanFromEvento, normalizePlanId } from "@/lib/planStrategy";
 import { getTemplate } from "@/lib/templateGallery";
 
 type Filtro = "todos" | "publicados" | "rascunhos";
@@ -25,7 +26,7 @@ function PainelInner() {
     [eventos]
   );
   const { counts: viewCounts } = useEventViews(eventoIds);
-  const [regenerandoId, setRegenerandoId] = useState<string | null>(null);
+  // (regenerar removido na simplificação UX 2026-05-17 — função foi pra evento/[slug] futuramente)
   const [publicandoId, setPublicandoId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [aviso, setAviso] = useState<{ tipo: "erro" | "ok" | "aviso"; texto: string } | null>(null);
@@ -108,39 +109,6 @@ function PainelInner() {
       const msg = error instanceof Error ? error.message : "Erro ao apagar.";
       setAviso({ tipo: "erro", texto: msg });
     }
-  }
-
-  async function regenerarSite(idx: number) {
-    const evento = eventos[idx];
-    if (!evento?.id || regenerandoId) return;
-    setRegenerandoId(evento.id);
-    setAviso(null);
-    setMenuAberto(null);
-
-    const resultado = await gerarSiteAPI(evento);
-
-    if (resultado.siteGerado && evento.id) {
-      try {
-        await atualizarEvento(evento.id, {
-          siteGerado: resultado.siteGerado,
-          ...(resultado.siteHtml ? { siteHtml: resultado.siteHtml } : {}),
-        });
-        setAviso({
-          tipo: resultado.aiAvailable ? "ok" : "aviso",
-          texto: resultado.aiAvailable
-            ? "Conteúdo regenerado pela IA com sucesso."
-            : "Conteúdo regenerado em modo básico. A IA avançada está temporariamente indisponível.",
-        });
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : "Erro ao salvar.";
-        setAviso({ tipo: "erro", texto: msg });
-      }
-    } else {
-      setAviso({ tipo: "erro", texto: resultado.erro || "Não foi possível regenerar o conteúdo." });
-    }
-
-    setRegenerandoId(null);
-    setTimeout(() => setAviso(null), 5000);
   }
 
   async function publicarEvento(idx: number) {
@@ -282,14 +250,7 @@ function PainelInner() {
         {/* Lista */}
         <section className="flex-1 px-6 pb-8 pt-5">
           {eventos.length === 0 ? (
-            <EmptyState
-              icon="✦"
-              title="Você ainda não criou nenhum evento"
-              description="Em 4 etapas a IA monta um site completo, com RSVP, mapa e QR Code. Sem cartão pra começar."
-              action={{ label: "Criar meu primeiro evento →", href: "/novo-evento", variant: "primary" }}
-              secondaryAction={{ label: "Ver exemplos", href: "/exemplos", variant: "ghost" }}
-              className="mx-auto max-w-2xl"
-            />
+            <OnboardingWelcome nomeUsuario={user?.email ?? ""} />
           ) : (
             <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--surface)]">
               {/* Header */}
@@ -317,7 +278,7 @@ function PainelInner() {
                   const tpl = evento.briefing?.templateId ? getTemplate(evento.briefing.templateId) : undefined;
                   const accent = tpl?.accent ?? "#B8935A";
                   const isMenuOpen = menuAberto === evento.id;
-                  const isRegenerando = regenerandoId === evento.id;
+                  const isRegenerando = false;
                   const isPublicando = publicandoId === evento.id;
 
                   return (

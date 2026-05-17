@@ -38,7 +38,7 @@ function salvarEstado(estado) {
  * Verifica se ainda há quota disponível.
  * Retorna { ok: true } ou { ok: false, message }.
  */
-export function checkGeminiQuota(caller = "anonymous") {
+export function checkGeminiQuota(_caller = "anonymous") {
   const estado = lerEstado()
   if (estado.count >= DAILY_LIMIT) {
     return {

@@ -59,7 +59,6 @@ const supa = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
 })
 
 const metricas = {}
-const desde30d = new Date(Date.now() - 30 * 86400 * 1000).toISOString()
 
 try {
   // ============ RSVP / Convidados (SEM NOMES) ============
