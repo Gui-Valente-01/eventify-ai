@@ -1,14 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import AiSiteFrame from "@/components/AiSiteFrame";
 import BrandHeader from "@/components/BrandHeader";
 import EmptyState from "@/components/EmptyState";
 import { useEventoPublico } from "@/hooks/useEventoPublico";
 import { useTrackView } from "@/hooks/useTrackView";
-import { formatarData, getTemplateId } from "@/lib/utils";
+import { formatarData } from "@/lib/utils";
 import { isPublishedStatus, getStatusLabel } from "@/lib/publication";
-import { CLIENT_VISUALS, TemplateId } from "@/lib/visuals";
 
 export default function PaginaCliente() {
   const params = useParams();
@@ -23,6 +23,7 @@ export default function PaginaCliente() {
 
   const [nomeConvidado, setNomeConvidado] = useState("");
   const [mensagem, setMensagem] = useState<{ tipo: "erro" | "ok"; texto: string } | null>(null);
+  const rsvpRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!mensagem) return;
@@ -99,6 +100,10 @@ export default function PaginaCliente() {
     }
   }
 
+  function scrollToRsvp() {
+    rsvpRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   const convidados = evento.convidados || [];
   const endereco = evento.endereco || {};
   const enderecoCompleto = [endereco.rua, endereco.numero, endereco.cidade, endereco.estado]
@@ -111,48 +116,57 @@ export default function PaginaCliente() {
   const qrCodeURL = linkEvento
     ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(linkEvento)}`
     : "";
-  const visual = CLIENT_VISUALS[getTemplateId(evento) as TemplateId] || CLIENT_VISUALS.festa;
-  const site = evento.siteGerado;
 
   return (
-    <main className={visual.page}>
-      <BrandHeader />
-      <section className={visual.section}>
-        <div className="space-y-9">
-          <div className={visual.kicker}>
-            {visual.label} · {evento.tipo || "Evento especial"}
-          </div>
+    <main className="eventify-page">
+      {/* Site da IA — tela inteira no topo */}
+      {evento.siteHtml ? (
+        <div className="relative">
+          <AiSiteFrame html={evento.siteHtml} titulo={evento.nome} />
+          <button
+            onClick={scrollToRsvp}
+            className="fixed bottom-6 right-6 z-40 rounded-full bg-[color:var(--ink)] px-6 py-3 text-[14px] font-medium text-white shadow-lg transition hover:scale-105"
+            aria-label="Ir para confirmar presença"
+          >
+            ✓ Confirmar presença
+          </button>
+        </div>
+      ) : (
+        <section className="editorial-narrow py-16 text-center">
+          <span className="eventify-kicker">Convite</span>
+          <h1 className="eventify-title mt-6 text-[clamp(40px,5vw,64px)]">{evento.nome}</h1>
+          <p className="mt-4 text-[color:var(--muted)]">
+            {formatarData(evento.data)}
+            {enderecoCompleto && ` · ${enderecoCompleto}`}
+          </p>
+        </section>
+      )}
 
-          <div>
-            <p className={`${visual.muted} text-[11px] uppercase tracking-[0.28em]`}>Convite</p>
-            <h1 className={`${visual.title} mt-5`}>{site?.heroTitle || evento.nome}</h1>
-            <p className={`${visual.muted} mt-6 max-w-2xl text-[17px] leading-[1.65]`}>
-              {site?.invitationMessage ||
-                "Você está convidado para viver esse momento especial. Confira os detalhes abaixo e confirme sua presença."}
+      {/* Seção de RSVP + mapa + QR — abaixo do site */}
+      <section
+        ref={rsvpRef}
+        className="border-t border-[color:var(--hairline)] bg-[color:var(--paper)] py-16"
+      >
+        <div className="editorial-narrow space-y-10">
+          <div className="text-center">
+            <span className="eventify-kicker">Confirme sua presença</span>
+            <h2 className="mt-4 font-display text-[clamp(32px,4vw,48px)] italic text-[color:var(--ink)]">
+              Avise se vai estar lá
+            </h2>
+            <p className="mt-3 text-[14px] text-[color:var(--muted)]">
+              {convidados.length} {convidados.length === 1 ? "pessoa já confirmou" : "pessoas já confirmaram"}
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className={`${visual.card} p-6`}>
-              <p className={`${visual.muted} text-[10.5px] uppercase tracking-[0.22em]`}>Data</p>
-              <p className="mt-3 font-display text-[26px] font-light leading-tight tracking-[-0.01em] text-[color:var(--ink)]">
-                {formatarData(evento.data)}
-              </p>
-            </div>
-            <div className={`${visual.card} p-6`}>
-              <p className={`${visual.muted} text-[10.5px] uppercase tracking-[0.22em]`}>Local</p>
-              <p className="mt-3 font-display text-[20px] font-normal leading-[1.3] tracking-[-0.005em] text-[color:var(--ink)]">
-                {enderecoCompleto || "Local a confirmar"}
-              </p>
-            </div>
-          </div>
-
-          <form onSubmit={enviarPresenca} className={`${visual.card} p-6`}>
+          <form
+            onSubmit={enviarPresenca}
+            className="mx-auto max-w-xl rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8"
+          >
             <label
               htmlFor="nomeConvidado"
-              className={`${visual.muted} block text-[10.5px] uppercase tracking-[0.22em]`}
+              className="block text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted)]"
             >
-              Confirmar presença
+              Seu nome
             </label>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <input
@@ -160,16 +174,16 @@ export default function PaginaCliente() {
                 type="text"
                 value={nomeConvidado}
                 onChange={(event) => setNomeConvidado(event.target.value)}
-                placeholder="Seu nome completo"
+                placeholder="Nome completo"
                 className="eventify-input flex-1"
               />
-              <button type="submit" className={visual.button}>
-                {site?.ctaLabel || "Confirmar"} <span aria-hidden>→</span>
+              <button type="submit" className="eventify-button eventify-button-primary">
+                Confirmar <span aria-hidden>→</span>
               </button>
             </div>
             {mensagem && (
               <p
-                className={`mt-4 border-y px-3 py-2 text-[13px] ${
+                className={`mt-4 rounded-md border px-3 py-2 text-[13px] ${
                   mensagem.tipo === "erro"
                     ? "border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] text-[color:var(--rose,#A85462)]"
                     : "border-[color:var(--green,#5B7A4F)] bg-[rgba(91,122,79,0.06)] text-[color:var(--green,#5B7A4F)]"
@@ -179,57 +193,40 @@ export default function PaginaCliente() {
               </p>
             )}
           </form>
-        </div>
 
-        <div className="space-y-6">
-          <div className={`${visual.card} overflow-hidden p-3`}>
-            {evento.imagem ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={evento.imagem} alt={evento.nome} className={`h-[420px] w-full object-cover ${visual.image}`} />
-            ) : (
-              <div
-                className={`${visual.muted} ${visual.accent} flex h-[420px] items-center justify-center px-8 text-center font-display italic`}
-              >
-                Imagem do evento
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
-            <div className={`${visual.card} p-6 text-center`}>
-              <p className={`${visual.muted} text-[10.5px] uppercase tracking-[0.22em]`}>Confirmados</p>
-              <p className="mt-3 font-display text-[44px] font-light leading-none tracking-[-0.02em] text-[color:var(--ink)]">
-                {convidados.length}
-              </p>
-            </div>
-            {mapaURL && (
-              <div className={`${visual.card} overflow-hidden`}>
-                <iframe
-                  title={`Mapa de ${evento.nome}`}
-                  src={mapaURL}
-                  width="100%"
-                  height="180"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                />
-              </div>
-            )}
-          </div>
-
-          {qrCodeURL && (
-            <div className={`${visual.card} flex flex-col gap-5 p-6 sm:flex-row sm:items-center`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrCodeURL}
-                alt="QR Code do evento"
-                className="h-32 w-32 rounded-[10px] border border-[color:var(--hairline)] bg-white p-2"
-              />
-              <div>
-                <p className="font-display text-[22px] font-normal tracking-[-0.01em] text-[color:var(--ink)]">
-                  Compartilhe pelo <em className="italic text-[color:var(--gold)]">QR Code</em>
-                </p>
-                <p className={`${visual.muted} mt-2 break-all text-[12.5px] font-mono-tight`}>{linkEvento}</p>
-              </div>
+          {(mapaURL || qrCodeURL) && (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {mapaURL && (
+                <div className="overflow-hidden rounded-[12px] border border-[color:var(--hairline)] bg-white">
+                  <div className="bg-[color:var(--paper-2)] px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                    Local
+                  </div>
+                  <iframe
+                    title={`Mapa de ${evento.nome}`}
+                    src={mapaURL}
+                    width="100%"
+                    height="220"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                  />
+                </div>
+              )}
+              {qrCodeURL && (
+                <div className="flex flex-col items-center gap-3 rounded-[12px] border border-[color:var(--hairline)] bg-white p-6 text-center">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                    Compartilhe pelo QR Code
+                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={qrCodeURL}
+                    alt="QR Code do evento"
+                    className="h-36 w-36 rounded-[8px] border border-[color:var(--hairline)] p-1"
+                  />
+                  <p className="break-all text-[11px] font-mono-tight text-[color:var(--muted)]">
+                    {linkEvento}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
