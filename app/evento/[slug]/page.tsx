@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import AiSiteFrame from "@/components/AiSiteFrame";
 import BrandHeader from "@/components/BrandHeader";
 import EditorVisualModal from "@/components/EditorVisualModal";
@@ -38,7 +38,10 @@ function montarLivePaletteFromCustom(
 
 export default function Evento() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug as string);
+  const justPaid = searchParams.get("just-paid") === "1";
   const {
     eventos,
     isLoading,
@@ -57,6 +60,19 @@ export default function Evento() {
   const [publicando, setPublicando] = useState(false);
   const [convidando, setConvidando] = useState(false);
   const [editandoVisual, setEditandoVisual] = useState(false);
+  const [celebrando, setCelebrando] = useState(justPaid);
+  const [linkCopiado, setLinkCopiado] = useState(false);
+
+  // Limpa o param ?just-paid=1 da URL ao montar (mas mantém modal aberto)
+  useEffect(() => {
+    if (justPaid) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("just-paid");
+      url.searchParams.delete("bypass");
+      router.replace(url.pathname + (url.search || ""), { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [emailsInput, setEmailsInput] = useState("");
   const [enviandoConvites, setEnviandoConvites] = useState(false);
   const [resultadoConvites, setResultadoConvites] = useState<{
@@ -766,6 +782,87 @@ export default function Evento() {
                 {salvandoEdit ? "Salvando..." : "Salvar"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CELEBRATÓRIO PÓS-PAGAMENTO */}
+      {celebrando && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+          onClick={() => setCelebrando(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-[16px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--gold-soft)] text-[36px]">
+                🎉
+              </div>
+              <span className="eventify-kicker mt-5 block">Tudo pronto</span>
+              <h2 className="mt-3 font-display text-[32px] italic leading-[1.1] text-[color:var(--ink)]">
+                Seu site está <em className="text-[color:var(--gold)]">no ar!</em>
+              </h2>
+              <p className="mt-4 text-[14.5px] leading-[1.5] text-[color:var(--muted)]">
+                Agora é só compartilhar o link com seus convidados pra eles confirmarem presença.
+              </p>
+            </div>
+
+            {/* Link copiável */}
+            <div className="mt-6 flex items-center gap-2 rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2.5">
+              <span className="flex-1 truncate font-mono-tight text-[12.5px] text-[color:var(--ink-2)]">
+                {typeof window !== "undefined" ? `${window.location.origin}/cliente/${slug}` : `/cliente/${slug}`}
+              </span>
+              <button
+                onClick={async () => {
+                  if (typeof navigator !== "undefined" && navigator.clipboard) {
+                    await navigator.clipboard.writeText(`${window.location.origin}/cliente/${slug}`);
+                    setLinkCopiado(true);
+                    setTimeout(() => setLinkCopiado(false), 2000);
+                  }
+                }}
+                className="rounded-[6px] border border-[color:var(--hairline-2)] bg-[color:var(--surface)] px-3 py-1 text-[11.5px] font-medium text-[color:var(--ink)] transition hover:border-[color:var(--ink)]"
+              >
+                {linkCopiado ? "✓ Copiado!" : "Copiar"}
+              </button>
+            </div>
+
+            {/* Ações principais */}
+            <div className="mt-5 space-y-2.5">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `Você está convidado para ${evento.nome}! Confirme presença e veja detalhes: ${typeof window !== "undefined" ? `${window.location.origin}/cliente/${slug}` : `/cliente/${slug}`}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2.5 rounded-[10px] bg-emerald-500 px-5 py-3 text-[14.5px] font-semibold text-white shadow transition hover:bg-emerald-600"
+                onClick={() => setCelebrando(false)}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.966-.273-.099-.471-.149-.67.149-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+                Compartilhar no WhatsApp
+              </a>
+
+              <button
+                onClick={() => {
+                  setCelebrando(false);
+                  setConvidando(true);
+                  setResultadoConvites(null);
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-[color:var(--ink)] bg-[color:var(--surface)] px-5 py-3 text-[14.5px] font-medium text-[color:var(--ink)] transition hover:bg-[color:var(--paper)]"
+              >
+                📧 Enviar lista de convidados por e-mail
+              </button>
+            </div>
+
+            <button
+              onClick={() => setCelebrando(false)}
+              className="mt-5 block w-full text-center text-[12.5px] text-[color:var(--muted)] underline-offset-2 hover:underline"
+            >
+              Depois eu compartilho
+            </button>
           </div>
         </div>
       )}

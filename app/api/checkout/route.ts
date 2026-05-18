@@ -134,7 +134,7 @@ export async function POST(req: Request) {
 
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     return NextResponse.json({
-      url: `${origin}/painel?checkout=success&event=${evento.id}&bypass=${isAdmin ? "admin" : "plan"}`,
+      url: `${origin}/evento/${evento.slug}?just-paid=1&bypass=${isAdmin ? "admin" : "plan"}`,
       configurado: true,
       bypass: true,
     });
@@ -149,10 +149,10 @@ export async function POST(req: Request) {
       "line_items[0][price]": priceId,
       "line_items[0][quantity]": "1",
       "success_url": evento
-        ? `${origin}/painel?checkout=success&event=${evento.id}`
+        ? `${origin}/evento/${evento.slug}?just-paid=1`
         : `${origin}/painel?checkout=success&plan=${planId}`,
       "cancel_url": evento
-        ? `${origin}/painel?checkout=cancel&event=${evento.id}`
+        ? `${origin}/evento/${evento.slug}?checkout=cancel`
         : `${origin}/precos?checkout=cancel`,
     });
     if (stripeCustomerId) {
