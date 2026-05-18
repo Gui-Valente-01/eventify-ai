@@ -11,18 +11,23 @@ export type Plan = {
   cta: string;
 };
 
+// Recursos consolidados — SINCRONIZADOS com lib/planLimits.ts (fonte da verdade
+// do que o código de fato libera). Atualizar AMBOS quando mudar algo.
 export const PLANS: Plan[] = [
   {
     id: "basico",
     nome: "Básico",
     preco: 29,
     precoFormatado: "R$ 29/mês",
-    descricao: "Assinatura inicial para divulgar eventos com rapidez.",
+    descricao: "Pra quem quer publicar 1 evento de cada vez com tudo essencial.",
     recursos: [
-      "Site responsivo personalizado",
-      "1 template à escolha",
-      "Domínio eventify.app/seu-evento",
+      "Até 5 eventos publicados",
+      "5 regenerações de IA por evento",
+      "Sem marca d'água no site",
       "QR Code automático",
+      "RSVP ilimitado de convidados",
+      "Convite por e-mail em massa",
+      "Editor visual (cores + fontes)",
     ],
     cta: "Assinar Básico",
   },
@@ -32,12 +37,12 @@ export const PLANS: Plan[] = [
     preco: 49,
     precoFormatado: "R$ 49/mês",
     destaque: true,
-    descricao: "Assinatura completa com confirmação de presença.",
+    descricao: "Pra quem organiza vários eventos por ano (cerimonialista, planner).",
     recursos: [
       "Tudo do Básico",
-      "Sistema de RSVP completo",
-      "Lista de convidados em tempo real",
-      "Mapa integrado e suporte por e-mail",
+      "Até 20 eventos publicados",
+      "15 regenerações de IA por evento",
+      "Mais flexibilidade pra ajustar antes de fechar",
     ],
     cta: "Assinar Intermediário",
   },
@@ -46,12 +51,13 @@ export const PLANS: Plan[] = [
     nome: "Premium",
     preco: 79,
     precoFormatado: "R$ 79/mês",
-    descricao: "Assinatura premium com IA Claude e recursos avançados.",
+    descricao: "Pra agências, buffets e produtoras com volume alto.",
     recursos: [
       "Tudo do Intermediário",
-      "Conteúdo gerado pela IA Claude",
-      "Regeneração ampliada de copy",
-      "Suporte prioritário e analytics",
+      "Eventos praticamente ilimitados",
+      "Regenerações de IA praticamente ilimitadas",
+      "Acesso a templates premium exclusivos",
+      "Atendimento prioritário por e-mail",
     ],
     cta: "Assinar Premium",
   },

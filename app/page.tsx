@@ -4,13 +4,13 @@ import { TEMPLATES } from "@/lib/templateGallery";
 
 const features = [
   {
-    title: "Briefing inteligente",
-    text: "4 etapas guiadas com perguntas específicas pro seu tipo de evento. Sem campos genéricos.",
+    title: "Briefing guiado",
+    text: "4 etapas com perguntas específicas pro tipo do evento. Sem formulário genérico.",
     glyph: "a",
   },
   {
-    title: "RSVP em tempo real",
-    text: "Convidado abre no celular, confirma com 1 toque. Você vê tudo no painel com export em CSV.",
+    title: "RSVP simples",
+    text: "Convidado abre no celular e confirma presença com o nome. Você vê tudo no painel + exporta CSV.",
     glyph: "b",
   },
   {
@@ -24,13 +24,13 @@ const features = [
     glyph: "d",
   },
   {
-    title: "Lista de presentes",
-    text: "PIX, transferência ou link externo. Mensagem de agradecimento automática.",
+    title: "Convite por e-mail em massa",
+    text: "Cola a lista, envia até 50 convites por vez com link e CTA pra confirmar presença.",
     glyph: "e",
   },
   {
-    title: "Regenere com 1 clique",
-    text: "Não gostou da copy? Regenere seção a seção sem perder o resto. Sem cobrança extra.",
+    title: "Editor visual ao vivo",
+    text: "Mude cores e tipografia com preview instantâneo. Sem regerar com IA, sem esperar.",
     glyph: "f",
   },
 ];
@@ -38,7 +38,7 @@ const features = [
 const passos = [
   { n: "01", titulo: "Conte do evento", desc: "Wizard guiado de 4 etapas. Nome, data, local e detalhes específicos." },
   { n: "02", titulo: "Escolha um template", desc: "Biblioteca curada por tipo de evento. Preview real, sem placeholder." },
-  { n: "03", titulo: "Refine com IA", desc: "Edite qualquer seção, regenere com 1 clique, troque foto, ajuste tom." },
+  { n: "03", titulo: "IA gera o site", desc: "Copy, paleta e seções geradas pelo Claude em segundos." },
   { n: "04", titulo: "Publique e divulga", desc: "Link final + QR Code prontos pra compartilhar." },
 ];
 
@@ -46,18 +46,22 @@ const planos = [
   {
     nome: "Básico",
     valor: "29",
-    items: ["1 evento publicado", "RSVP até 80 convidados", "Subdomínio eventify.app", "Suporte por e-mail"],
+    items: [
+      "Até 5 eventos publicados",
+      "5 regenerações IA por evento",
+      "RSVP ilimitado por evento",
+      "QR Code + mapa + convite por e-mail",
+    ],
     featured: false,
   },
   {
     nome: "Intermediário",
     valor: "49",
     items: [
-      "3 eventos publicados",
-      "RSVP até 250 convidados",
-      "Domínio próprio",
-      "Galeria de fotos & vídeos",
-      "Suporte prioritário",
+      "Tudo do Básico",
+      "Até 20 eventos publicados",
+      "15 regenerações IA por evento",
+      "Pra quem organiza vários eventos",
     ],
     featured: true,
   },
@@ -65,11 +69,10 @@ const planos = [
     nome: "Premium",
     valor: "79",
     items: [
-      "Eventos ilimitados",
-      "RSVP sem limite",
-      "Domínio + e-mail",
-      "Marca branca (sem assinatura)",
-      "Suporte humano em 1h",
+      "Tudo do Intermediário",
+      "Eventos praticamente ilimitados",
+      "Templates premium exclusivos",
+      "Atendimento prioritário por e-mail",
     ],
     featured: false,
   },
@@ -130,7 +133,7 @@ export default function Home() {
                 <span className="h-2 w-2 rounded-full bg-[#28C840] opacity-85" />
               </div>
               <span className="font-mono-tight text-[11px] text-[color:var(--muted)]">
-                eventify.app/marina-e-rafael
+                eventify.app/cliente/marina-e-rafael
               </span>
               <span className="ml-auto inline-flex items-center gap-1.5 text-[11.5px] text-[color:var(--green,#5B7A4F)]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--green,#5B7A4F)]" />
@@ -155,16 +158,16 @@ export default function Home() {
                 </div>
                 <div className="mt-6 flex gap-2">
                   <Link
-                    href="/novo-evento"
+                    href="/exemplos/casamento-mariana-e-rafael"
                     className="inline-flex h-9 items-center rounded-[8px] bg-[color:var(--ink)] px-4 text-[12.5px] font-medium text-white"
                   >
-                    Confirmar presença
+                    Ver exemplo
                   </Link>
                   <Link
-                    href="/novo-evento"
+                    href="/exemplos"
                     className="inline-flex h-9 items-center rounded-[8px] border border-[color:var(--hairline-2)] bg-[color:var(--surface)] px-4 text-[12.5px] text-[color:var(--ink)]"
                   >
-                    Como chegar
+                    Mais exemplos
                   </Link>
                 </div>
               </div>
@@ -191,15 +194,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Logos */}
-          <div className="mt-10 flex flex-wrap items-center gap-x-9 gap-y-3 text-[13px] text-[color:var(--muted)] opacity-90">
-            <span className="text-[11px] uppercase tracking-[0.16em]">Confiam no Eventify</span>
-            <span className="h-3.5 w-px bg-[color:var(--hairline-2)]" />
-            {["Casa Petra", "Estúdio Paloma", "Villa Bisutti", "Fasano", "Buffet Charlô"].map((b) => (
-              <span key={b} className="font-display text-[18px] tracking-[0.02em] text-[color:var(--ink-2)]">
-                {b}
-              </span>
-            ))}
+          {/* Status fase beta — honestidade > vaidade */}
+          <div className="mt-10 inline-flex items-center gap-3 rounded-full border border-[color:var(--hairline)] bg-[color:var(--surface)] px-4 py-2 text-[12.5px] text-[color:var(--ink-2)]">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--gold)]" />
+            Em fase inicial — atendendo os primeiros clientes pessoalmente
           </div>
         </div>
       </section>
@@ -314,13 +312,13 @@ export default function Home() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
               <div className="absolute inset-6 rounded-[10px] border border-[color:var(--hairline-2)]" />
               <span className="absolute left-10 top-10 text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted)]">
-                Marina · noiva
+                A proposta
               </span>
               <p className="absolute inset-x-10 bottom-10 font-display text-[30px] font-light italic leading-[1.15] tracking-[-0.01em] text-[color:var(--ink)]">
                 <span className="absolute -left-1.5 -top-3 text-[80px] not-italic text-[color:var(--gold)]">
                   &ldquo;
                 </span>
-                A gente abriu o link no almoço de família e todo mundo achou que tinha sido feito por um estúdio. Levou 12 minutos.
+                Você abre o link no almoço de família e ninguém acredita que foi feito em 12 minutos por IA.
               </p>
             </div>
           </div>
@@ -401,19 +399,25 @@ export default function Home() {
 
           <div className="mt-10 max-w-[820px] border-t border-[color:var(--hairline)]">
             <Detail open question="Preciso saber programar?">
-              Nenhum código. Você responde 4 etapas no wizard, escolhe um template da biblioteca e a IA preenche os textos. Se quiser mexer em HTML, dá — mas é totalmente opcional.
+              Nada de código. Você responde um wizard de 4 etapas, escolhe um template e a IA monta o site sozinha. Depois, pra ajustar cores e fontes, é só usar o editor visual (sem regerar).
             </Detail>
-            <Detail question="Posso usar meu próprio domínio?">
-              Sim, nos planos Intermediário e Premium. A gente fornece um passo a passo de DNS e cuida do certificado SSL automaticamente.
+            <Detail question="Qual o endereço (URL) do meu site?">
+              O link fica em <span className="font-mono-tight">eventify.app/cliente/seu-evento</span>. Domínio próprio (ex: <span className="font-mono-tight">casamento.com.br</span>) ainda não está disponível — está no nosso roadmap.
             </Detail>
             <Detail question="Como funciona o RSVP?">
-              Os convidados acessam o link, clicam em &ldquo;Confirmar presença&rdquo; e respondem 2-3 perguntas (acompanhantes, restrição alimentar, etc.). Você vê tudo no painel, com exportação em CSV.
+              Os convidados abrem o link, digitam o nome e confirmam presença. Você vê a lista em tempo real no painel e pode exportar em CSV. Por enquanto, o formulário é só nome — perguntas adicionais (acompanhantes, restrição alimentar) estão no nosso roadmap.
             </Detail>
             <Detail question="E se eu não gostar do site gerado?">
-              Regenere a seção que não curtiu — quantas vezes quiser, sem cobrança. Ou edite manualmente direto no painel. Você só paga quando decide publicar.
+              Você pode ajustar cores e tipografia no editor visual sem custo nenhum (preview em tempo real). Pra regerar o conteúdo com novo briefing, cada plano tem um limite de regenerações por evento (5 no Básico, 15 no Intermediário, praticamente ilimitado no Premium). Você só paga quando decide publicar.
+            </Detail>
+            <Detail question="Posso convidar pessoas direto pelo sistema?">
+              Sim. No painel do evento tem um botão &ldquo;Convidar por e-mail&rdquo; — cola a lista (até 50 por vez) e cada pessoa recebe um e-mail bonito com o link da página e CTA pra confirmar.
             </Detail>
             <Detail question="Posso cancelar a qualquer momento?">
-              Sim. Sem fidelidade, sem multa. O site fica disponível até o fim do ciclo já pago.
+              Sim. Sem fidelidade, sem multa. O site fica ativo até o fim do ciclo já pago. Reembolso integral em até 7 dias (art. 49 CDC).
+            </Detail>
+            <Detail question="Vocês têm clientes pagantes?">
+              Estamos em fase inicial, atendendo os primeiros clientes pessoalmente por WhatsApp. Se você for um dos primeiros, ganha contato direto com o fundador.
             </Detail>
           </div>
         </div>
