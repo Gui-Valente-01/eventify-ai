@@ -5,14 +5,36 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import AiSiteFrame from "@/components/AiSiteFrame";
 import BrandHeader from "@/components/BrandHeader";
+import EditorVisualModal from "@/components/EditorVisualModal";
 import ShareButtons from "@/components/ShareButtons";
 import { useEventos, type EventoDados } from "@/hooks/useEventos";
 import { buscarCEP, dataMinimaHoje, mascararCEP } from "@/lib/utils";
 import { isPublishedStatus, getStatusLabel } from "@/lib/publication";
 import { getSelectedPlanFromEvento, normalizePlanId } from "@/lib/planStrategy";
+import { FONT_CATALOG, type LivePalette } from "@/lib/livePalette";
 
 const TIPOS_EVENTO = ["Casamento", "Aniversário", "Evento Corporativo", "Festa", "Religioso"] as const;
 const TAMANHO_MAXIMO_IMAGEM = 4 * 1024 * 1024;
+
+function montarLivePaletteFromCustom(
+  custom?: {
+    paleta?: string[];
+    fontDisplayId?: string;
+    fontBodyId?: string;
+  } | null
+): LivePalette | null {
+  if (!custom) return null;
+  const tem = (custom.paleta && custom.paleta.length >= 4) || custom.fontDisplayId || custom.fontBodyId;
+  if (!tem) return null;
+  return {
+    fundo: custom.paleta?.[0],
+    superficie: custom.paleta?.[1],
+    texto: custom.paleta?.[2],
+    acento: custom.paleta?.[3],
+    fontDisplay: custom.fontDisplayId ? FONT_CATALOG[custom.fontDisplayId] : undefined,
+    fontBody: custom.fontBodyId ? FONT_CATALOG[custom.fontBodyId] : undefined,
+  };
+}
 
 export default function Evento() {
   const params = useParams();
@@ -34,6 +56,7 @@ export default function Evento() {
   const [salvandoEdit, setSalvandoEdit] = useState(false);
   const [publicando, setPublicando] = useState(false);
   const [convidando, setConvidando] = useState(false);
+  const [editandoVisual, setEditandoVisual] = useState(false);
   const [emailsInput, setEmailsInput] = useState("");
   const [enviandoConvites, setEnviandoConvites] = useState(false);
   const [resultadoConvites, setResultadoConvites] = useState<{
@@ -130,6 +153,27 @@ export default function Evento() {
     if (!evento) return;
     setFormEdit({ ...evento });
     setEditando(true);
+  }
+
+  async function salvarPersonalizacaoVisual(custom: {
+    paleta: string[];
+    fontDisplayId: string;
+    fontBodyId: string;
+  }) {
+    if (!evento || indexEvento < 0) return;
+    const briefingAtual = evento.briefing || {};
+    const novoBriefing = {
+      ...briefingAtual,
+      customTemplate: {
+        ...(briefingAtual.customTemplate || {}),
+        paleta: custom.paleta,
+        fontDisplayId: custom.fontDisplayId,
+        fontBodyId: custom.fontBodyId,
+        salvoEm: new Date().toISOString(),
+      },
+    };
+    await atualizarEvento(indexEvento, { ...evento, briefing: novoBriefing });
+    setMensagem({ tipo: "ok", texto: "Visual personalizado salvo!" });
   }
 
   async function enviarConvites() {
@@ -258,6 +302,14 @@ export default function Evento() {
             <button onClick={abrirEdicao} className="eventify-button eventify-button-ghost">
               ✎ Editar dados
             </button>
+            {evento.siteHtml && (
+              <button
+                onClick={() => setEditandoVisual(true)}
+                className="eventify-button eventify-button-ghost"
+              >
+                🎨 Personalizar visual
+              </button>
+            )}
             {isPublishedStatus(evento.status) && (
               <>
                 <button
@@ -324,7 +376,11 @@ export default function Evento() {
             </h2>
             {evento.siteHtml ? (
               <div className="overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
-                <AiSiteFrame html={evento.siteHtml} titulo={evento.nome} />
+                <AiSiteFrame
+                  html={evento.siteHtml}
+                  titulo={evento.nome}
+                  paletteOverride={montarLivePaletteFromCustom(evento.briefing?.customTemplate)}
+                />
               </div>
             ) : (
               <div className="rounded-[10px] border border-dashed border-[color:var(--hairline)] bg-[color:var(--paper-2)] p-12 text-center text-[color:var(--muted)]">
@@ -636,6 +692,17 @@ export default function Evento() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL DE EDITOR VISUAL */}
+      {editandoVisual && (
+        <EditorVisualModal
+          siteHtml={evento.siteHtml || null}
+          nomeEvento={evento.nome}
+          initialCustom={evento.briefing?.customTemplate}
+          onSalvar={salvarPersonalizacaoVisual}
+          onClose={() => setEditandoVisual(false)}
+        />
       )}
 
       {/* MODAL DE CONVITES POR E-MAIL */}

@@ -9,6 +9,27 @@ import { useEventoPublico } from "@/hooks/useEventoPublico";
 import { useTrackView } from "@/hooks/useTrackView";
 import { formatarData } from "@/lib/utils";
 import { isPublishedStatus, getStatusLabel } from "@/lib/publication";
+import { FONT_CATALOG, type LivePalette } from "@/lib/livePalette";
+
+function montarLivePalette(
+  custom?: {
+    paleta?: string[];
+    fontDisplayId?: string;
+    fontBodyId?: string;
+  } | null
+): LivePalette | null {
+  if (!custom) return null;
+  const tem = (custom.paleta && custom.paleta.length >= 4) || custom.fontDisplayId || custom.fontBodyId;
+  if (!tem) return null;
+  return {
+    fundo: custom.paleta?.[0],
+    superficie: custom.paleta?.[1],
+    texto: custom.paleta?.[2],
+    acento: custom.paleta?.[3],
+    fontDisplay: custom.fontDisplayId ? FONT_CATALOG[custom.fontDisplayId] : undefined,
+    fontBody: custom.fontBodyId ? FONT_CATALOG[custom.fontBodyId] : undefined,
+  };
+}
 
 export default function PaginaCliente() {
   const params = useParams();
@@ -122,7 +143,11 @@ export default function PaginaCliente() {
       {/* Site da IA — tela inteira no topo */}
       {evento.siteHtml ? (
         <div className="relative">
-          <AiSiteFrame html={evento.siteHtml} titulo={evento.nome} />
+          <AiSiteFrame
+            html={evento.siteHtml}
+            titulo={evento.nome}
+            paletteOverride={montarLivePalette(evento.briefing?.customTemplate)}
+          />
           <button
             onClick={scrollToRsvp}
             className="fixed bottom-6 right-6 z-40 rounded-full bg-[color:var(--ink)] px-6 py-3 text-[14px] font-medium text-white shadow-lg transition hover:scale-105"
