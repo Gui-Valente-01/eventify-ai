@@ -24,6 +24,21 @@ import {
 const TAMANHO_MAXIMO_IMAGEM = 4 * 1024 * 1024;
 const STEPS = ["Sobre", "Local", "Estilo", "Detalhes"] as const;
 
+// Mapa tipo do evento → slug de exemplo real (em /exemplos/[slug])
+// Usado pra mostrar pro cliente como vai ficar o site antes de escolher.
+const EXEMPLO_SLUG_POR_TIPO: Record<string, string> = {
+  "Casamento": "casamento-mariana-e-rafael",
+  "Aniversário": "aniversario-helena-15-anos",
+  "Evento Corporativo": "summit-tech-ai-2026",
+  "Festa": "neon-night-festival",
+  "Religioso": "encontro-de-fe-comunidade-luz",
+};
+
+function exemploSlugPorTipo(tipo?: string): string | null {
+  if (!tipo) return null;
+  return EXEMPLO_SLUG_POR_TIPO[tipo] || null;
+}
+
 type Aviso = { tipo: "erro" | "aviso" | "ok"; texto: string } | null;
 
 export default function NovoEvento() {
@@ -844,56 +859,76 @@ function StepEstilo(props: {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visiveis.map((tpl) => {
           const sel = props.templateId === tpl.id;
+          const exemploSlug = exemploSlugPorTipo(tpl.tipos[0]);
           return (
-            <button
+            <div
               key={tpl.id}
-              type="button"
-              onClick={() => props.escolherTemplate(tpl)}
-              className={`relative overflow-hidden rounded-[10px] border bg-[color:var(--surface)] text-left transition-all hover:-translate-y-0.5 ${
+              className={`group relative overflow-hidden rounded-[10px] border bg-[color:var(--surface)] transition-all hover:-translate-y-0.5 ${
                 sel
                   ? "border-[color:var(--gold)] shadow-[0_0_0_4px_var(--gold-soft)]"
                   : "border-[color:var(--hairline)] hover:border-[color:var(--hairline-2)]"
               }`}
             >
-              {sel && (
-                <span className="absolute right-2 top-2 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--gold)] text-[11px] text-white">
-                  ✓
-                </span>
-              )}
-              {/* Visual preview */}
-              <div
-                className="relative aspect-[4/5]"
-                style={{
-                  background: `linear-gradient(160deg, ${tpl.accent}22, ${tpl.base} 75%)`,
-                }}
+              <button
+                type="button"
+                onClick={() => props.escolherTemplate(tpl)}
+                className="w-full text-left"
               >
+                {sel && (
+                  <span className="absolute right-2 top-2 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--gold)] text-[11px] text-white">
+                    ✓
+                  </span>
+                )}
+                {/* Visual preview */}
                 <div
-                  className="absolute inset-x-3 top-3 bottom-[42%] rounded-[5px] border border-black/[0.06] bg-white/95"
-                  style={{ background: tpl.base }}
-                />
-                <div
-                  className="absolute inset-x-3 bottom-9 font-display italic"
-                  style={{ color: tpl.accent === "#0A0A0A" || tpl.base.startsWith("#0") ? "#fff" : "#1F1B17", fontSize: "20px", lineHeight: 1.05 }}
+                  className="relative aspect-[4/5]"
+                  style={{
+                    background: `linear-gradient(160deg, ${tpl.accent}22, ${tpl.base} 75%)`,
+                  }}
                 >
-                  {tpl.nome}
+                  <div
+                    className="absolute inset-x-3 top-3 bottom-[42%] rounded-[5px] border border-black/[0.06] bg-white/95"
+                    style={{ background: tpl.base }}
+                  />
+                  <div
+                    className="absolute inset-x-3 bottom-9 font-display italic"
+                    style={{ color: tpl.accent === "#0A0A0A" || tpl.base.startsWith("#0") ? "#fff" : "#1F1B17", fontSize: "20px", lineHeight: 1.05 }}
+                  >
+                    {tpl.nome}
+                  </div>
+                  <div
+                    className="absolute inset-x-3 bottom-3 font-mono-tight tracking-[0.06em] uppercase"
+                    style={{ color: tpl.accent, fontSize: "10px" }}
+                  >
+                    {tpl.tipos[0]}
+                  </div>
                 </div>
-                <div
-                  className="absolute inset-x-3 bottom-3 font-mono-tight tracking-[0.06em] uppercase"
-                  style={{ color: tpl.accent, fontSize: "10px" }}
+                <div className="flex items-center justify-between gap-3 px-3 py-2.5 text-[12px] text-[color:var(--muted)]">
+                  <span>{tpl.tipos.join(" · ")}</span>
+                  <span className="font-mono-tight text-[10.5px]">{tpl.tom}</span>
+                </div>
+              </button>
+
+              {/* Botão preview no canto inferior — abre exemplo real em nova aba */}
+              {exemploSlug && (
+                <a
+                  href={`/exemplos/${exemploSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute right-3 bottom-[58px] z-10 flex items-center gap-1 rounded-full border border-[color:var(--hairline-2)] bg-[color:var(--surface)]/95 px-2.5 py-1 text-[10.5px] font-medium text-[color:var(--ink)] backdrop-blur transition hover:border-[color:var(--ink)] hover:bg-[color:var(--paper)]"
+                  title="Ver exemplo real deste tipo de evento"
                 >
-                  {tpl.tipos[0]}
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-3 px-3 py-2.5 text-[12px] text-[color:var(--muted)]">
-                <span>{tpl.tipos.join(" · ")}</span>
-                <span className="font-mono-tight text-[10.5px]">{tpl.tom}</span>
-              </div>
+                  👁 Ver site
+                </a>
+              )}
+
               {tpl.planoMinimo !== "basico" && (
                 <span className="absolute left-3 top-3 rounded-full border border-[color:var(--gold)] bg-[color:var(--surface)]/90 px-2 py-0.5 text-[9.5px] uppercase tracking-[0.14em] text-[color:var(--gold-2)] backdrop-blur">
                   {tpl.planoMinimo === "premium" ? "Premium" : "Intermediário+"}
                 </span>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
