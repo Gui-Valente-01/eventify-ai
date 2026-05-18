@@ -18,6 +18,7 @@
     "produto": "node scripts/agentes-automaticos/agente-produto.js",
     "cliente": "node scripts/agentes-automaticos/agente-cliente.js",
     "suporte": "node scripts/agentes-automaticos/agente-suporte.js",
+    "financeiro": "node scripts/agentes-automaticos/agente-financeiro.js",
     "dashboard:atualizar": "node scripts/agentes-automaticos/atualizar-dashboard-operacional.js",
     "prepare": "simple-git-hooks"
   },
