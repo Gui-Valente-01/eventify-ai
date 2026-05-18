@@ -17,6 +17,7 @@
     "arquiteto": "node scripts/agentes-automaticos/agente-arquiteto.js",
     "produto": "node scripts/agentes-automaticos/agente-produto.js",
     "cliente": "node scripts/agentes-automaticos/agente-cliente.js",
+    "suporte": "node scripts/agentes-automaticos/agente-suporte.js",
     "dashboard:atualizar": "node scripts/agentes-automaticos/atualizar-dashboard-operacional.js",
     "prepare": "simple-git-hooks"
   },
