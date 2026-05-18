@@ -13,6 +13,8 @@ import {
   markDone,
   markFailed,
 } from "@/lib/jobs/generationJobs";
+import { hashBriefing, isCacheValid } from "@/lib/jobs/briefingHash";
+import { createClient } from "@supabase/supabase-js";
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_CALLS = 5;
@@ -250,6 +252,45 @@ export async function POST(req: Request) {
     );
   }
 
+  // ===== Cache: se evento.id existe e briefing não mudou, retorna sem chamar IA =====
+  const newHash = hashBriefing(evento);
+  if (evento.id && userId) {
+    try {
+      const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (supaUrl && serviceKey) {
+        const admin = createClient(supaUrl, serviceKey, { auth: { persistSession: false } });
+        const { data: cached } = await admin
+          .from("eventos")
+          .select("briefing_hash, site_cached_at, site_gerado, owner_id")
+          .eq("id", evento.id)
+          .maybeSingle();
+
+        if (
+          cached?.owner_id === userId &&
+          isCacheValid({
+            storedHash: cached.briefing_hash,
+            newHash,
+            storedSiteHtml: (cached.site_gerado as { siteHtml?: string } | null)?.siteHtml,
+            cachedAt: cached.site_cached_at,
+          })
+        ) {
+          logger.info("gerar-site", "cache hit — pulando IA", { eventId: evento.id, hash: newHash });
+          const siteGerado = cached.site_gerado as Record<string, unknown> | null;
+          return NextResponse.json({
+            ...siteGerado,
+            promoData: siteGerado,
+            cached: true,
+          });
+        }
+      }
+    } catch (e) {
+      logger.warn("gerar-site", "cache check falhou, segue normal", { error: String(e) });
+    }
+  }
+
+  tlog("after-cache-check");
+
   if (!userId) {
     tlog("anonymous-inline");
     const result = await executeGeneration(evento, model, plan, userId);
@@ -286,6 +327,31 @@ export async function POST(req: Request) {
       await markRunning(jobId);
       const result = await executeGeneration(evento, model, plan, userId);
       await markDone(jobId, result);
+
+      // Marca cache no evento (pra próxima chamada com mesmo briefing virar cache hit)
+      if (evento.id) {
+        try {
+          const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+          const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          if (supaUrl && serviceKey) {
+            const admin = createClient(supaUrl, serviceKey, { auth: { persistSession: false } });
+            await admin
+              .from("eventos")
+              .update({
+                briefing_hash: newHash,
+                site_cached_at: new Date().toISOString(),
+              })
+              .eq("id", evento.id)
+              .eq("owner_id", userId);
+          }
+        } catch (cacheErr) {
+          logger.warn("gerar-site", "falha ao marcar cache do evento", {
+            eventId: evento.id,
+            error: String(cacheErr),
+          });
+        }
+      }
+
       logger.info("gerar-site", "job concluído", { jobId, ms: Date.now() - t0 });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
