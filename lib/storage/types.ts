@@ -36,6 +36,25 @@ export type Briefing = {
 
 export type EventStatus = "draft" | "preview" | "paid" | "published" | "archived";
 
+export type RsvpStatus = "confirmado" | "talvez" | "recusou";
+
+export type ConvidadoDetalhado = {
+  nome: string;
+  status: RsvpStatus;
+  acompanhantes: number;
+  restricaoAlimentar?: string | null;
+  recado?: string | null;
+  confirmadoEm?: string;
+};
+
+export type RsvpPayload = {
+  nome: string;
+  status?: RsvpStatus;
+  acompanhantes?: number;
+  restricaoAlimentar?: string;
+  recado?: string;
+};
+
 export type EventoDados = {
   id?: string;
   nome: string;
@@ -46,7 +65,10 @@ export type EventoDados = {
   imagem?: string;
   selectedPlan?: string;
   briefing?: Briefing;
+  /** Lista de nomes — mantida pra backward compat. */
   convidados?: string[];
+  /** Detalhes completos do RSVP (status, acompanhantes, restrição, recado). */
+  convidadosDetalhes?: ConvidadoDetalhado[];
   siteGerado?: GeneratedSite;
   siteHtml?: string;
   ownerId?: string;
@@ -61,7 +83,10 @@ export type StorageBackend = {
   create(evento: EventoDados): Promise<EventoDados>;
   update(id: string, partial: Partial<EventoDados>): Promise<EventoDados>;
   remove(id: string): Promise<void>;
+  /** Legado: aceita só nome. Internamente chama addRsvp com defaults. */
   addConvidado(eventoId: string, nome: string): Promise<void>;
+  /** Novo: aceita payload completo de RSVP. */
+  addRsvp(eventoId: string, dados: RsvpPayload): Promise<void>;
   removeConvidado(eventoId: string, nome: string): Promise<void>;
   uploadImage(file: File): Promise<string>;
 };

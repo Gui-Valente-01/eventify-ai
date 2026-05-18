@@ -101,13 +101,33 @@ export default function Evento() {
   }
 
   const convidados = evento.convidados || [];
+  const detalhes = evento.convidadosDetalhes || [];
+
+  // Mapa por nome (lowercase) pra cruzar detalhe com lista de convidados
+  const detalhesPorNome = new Map<string, typeof detalhes[number]>();
+  for (const d of detalhes) detalhesPorNome.set(d.nome.toLowerCase(), d);
+
+  const totalConfirmados = detalhes.filter((d) => d.status === "confirmado").length;
+  const totalTalvez = detalhes.filter((d) => d.status === "talvez").length;
+  const totalRecusou = detalhes.filter((d) => d.status === "recusou").length;
+  const totalAcompanhantes = detalhes
+    .filter((d) => d.status !== "recusou")
+    .reduce((acc, d) => acc + (d.acompanhantes || 0), 0);
+  const totalPessoasNoEvento = totalConfirmados + totalAcompanhantes;
+  const temDetalhes = detalhes.length > 0;
 
   function exportarCSV() {
     if (!evento) return;
-    const linhas = ["nome,confirmado_em"];
+    const linhas = ["nome,status,acompanhantes,restricao_alimentar,recado,confirmado_em"];
     (evento.convidados || []).forEach((nome) => {
+      const det = detalhesPorNome.get(nome.toLowerCase());
+      const status = det?.status || "confirmado";
+      const aco = det?.acompanhantes ?? 0;
+      const rest = (det?.restricaoAlimentar || "").replace(/"/g, '""');
+      const rec = (det?.recado || "").replace(/"/g, '""');
+      const quando = det?.confirmadoEm || new Date().toISOString().split("T")[0];
       const escapado = `"${nome.replace(/"/g, '""')}"`;
-      linhas.push(`${escapado},${new Date().toISOString().split("T")[0]}`);
+      linhas.push(`${escapado},${status},${aco},"${rest}","${rec}",${quando}`);
     });
     const csv = linhas.join("\n");
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
@@ -408,12 +428,37 @@ export default function Evento() {
             <div className="rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="font-display text-[24px] italic tracking-[-0.01em] text-[color:var(--ink)]">
-                  Convidados confirmados
+                  Lista de RSVPs
                 </h2>
                 <span className="font-mono-tight text-[13px] text-[color:var(--muted)]">
                   {convidados.length}
                 </span>
               </div>
+
+              {/* Resumo agregado */}
+              {temDetalhes && (
+                <div className="mt-4 grid grid-cols-2 gap-2 rounded-[8px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-3 text-[12px]">
+                  <div>
+                    <span className="text-[color:var(--green,#5B7A4F)]">✓ Vão:</span>{" "}
+                    <strong className="text-[color:var(--ink)]">{totalConfirmados}</strong>
+                    {totalAcompanhantes > 0 && (
+                      <span className="text-[color:var(--muted)]"> (+{totalAcompanhantes} aco.)</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-[color:var(--gold-2)]">? Talvez:</span>{" "}
+                    <strong className="text-[color:var(--ink)]">{totalTalvez}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[color:var(--rose,#A85462)]">✗ Não vão:</span>{" "}
+                    <strong className="text-[color:var(--ink)]">{totalRecusou}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[color:var(--muted)]">Total no evento:</span>{" "}
+                    <strong className="text-[color:var(--ink)]">{totalPessoasNoEvento}</strong>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-5 space-y-3">
                 <input
@@ -462,12 +507,31 @@ export default function Evento() {
                 )}
                 {convidados.length > 0 ? (
                   <ul className="space-y-2">
-                    {convidados.map((nome, index) => (
+                    {convidados.map((nome, index) => {
+                      const det = detalhesPorNome.get(nome.toLowerCase());
+                      const statusBadge =
+                        det?.status === "talvez"
+                          ? { txt: "talvez", cls: "bg-[var(--gold-soft)] text-[color:var(--gold-2)]" }
+                          : det?.status === "recusou"
+                            ? { txt: "não vai", cls: "bg-[rgba(168,84,98,0.1)] text-[color:var(--rose,#A85462)]" }
+                            : { txt: "vai", cls: "bg-[rgba(91,122,79,0.1)] text-[color:var(--green,#5B7A4F)]" };
+                      return (
                       <li
                         key={`${nome}-${index}`}
-                        className="flex items-center justify-between rounded-[8px] border border-[color:var(--hairline)] bg-[color:var(--paper-2)] px-3.5 py-2.5 text-[14px] text-[color:var(--ink-2)]"
+                        className="rounded-[8px] border border-[color:var(--hairline)] bg-[color:var(--paper-2)] px-3.5 py-2.5 text-[14px] text-[color:var(--ink-2)]"
                       >
-                        <span>{nome}</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <span className="truncate">{nome}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${statusBadge.cls}`}>
+                              {statusBadge.txt}
+                            </span>
+                            {det && det.acompanhantes > 0 && (
+                              <span className="text-[11.5px] text-[color:var(--muted)]">
+                                +{det.acompanhantes}
+                              </span>
+                            )}
+                          </div>
                         {confirmandoRemocao === index ? (
                           <span className="flex items-center gap-3 text-[12.5px]">
                             <button
@@ -486,13 +550,25 @@ export default function Evento() {
                         ) : (
                           <button
                             onClick={() => setConfirmandoRemocao(index)}
-                            className="text-[12.5px] text-[color:var(--rose,#A85462)] underline decoration-transparent underline-offset-2 hover:decoration-current"
+                            className="text-[12.5px] text-[color:var(--rose,#A85462)] underline decoration-transparent underline-offset-2 hover:decoration-current shrink-0"
                           >
                             Remover
                           </button>
                         )}
+                        </div>
+                        {det?.restricaoAlimentar && (
+                          <p className="mt-1.5 text-[11.5px] text-[color:var(--muted)]">
+                            🍽 {det.restricaoAlimentar}
+                          </p>
+                        )}
+                        {det?.recado && (
+                          <p className="mt-1 italic text-[11.5px] text-[color:var(--muted)]">
+                            💬 &ldquo;{det.recado}&rdquo;
+                          </p>
+                        )}
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="text-[13px] text-[color:var(--muted)]">

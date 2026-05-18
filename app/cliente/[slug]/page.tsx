@@ -31,10 +31,12 @@ function montarLivePalette(
   };
 }
 
+type RsvpStatusUI = "confirmado" | "talvez" | "recusou";
+
 export default function PaginaCliente() {
   const params = useParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : (params.slug as string);
-  const { evento, isLoading, confirmarPresenca } = useEventoPublico(slug);
+  const { evento, isLoading, enviarRsvp } = useEventoPublico(slug);
 
   useTrackView({
     eventoId: evento?.id,
@@ -43,6 +45,10 @@ export default function PaginaCliente() {
   });
 
   const [nomeConvidado, setNomeConvidado] = useState("");
+  const [statusRsvp, setStatusRsvp] = useState<RsvpStatusUI>("confirmado");
+  const [acompanhantes, setAcompanhantes] = useState(0);
+  const [restricaoAlimentar, setRestricaoAlimentar] = useState("");
+  const [recado, setRecado] = useState("");
   const [mensagem, setMensagem] = useState<{ tipo: "erro" | "ok"; texto: string } | null>(null);
   const rsvpRef = useRef<HTMLElement>(null);
 
@@ -112,12 +118,27 @@ export default function PaginaCliente() {
       return;
     }
     try {
-      await confirmarPresenca(nome);
+      await enviarRsvp({
+        nome,
+        status: statusRsvp,
+        acompanhantes: statusRsvp === "recusou" ? 0 : acompanhantes,
+        restricaoAlimentar: statusRsvp === "recusou" ? undefined : restricaoAlimentar.trim() || undefined,
+        recado: recado.trim() || undefined,
+      });
       setNomeConvidado("");
-      setMensagem({ tipo: "ok", texto: "Presença confirmada. Obrigado!" });
+      setAcompanhantes(0);
+      setRestricaoAlimentar("");
+      setRecado("");
+      const msg =
+        statusRsvp === "confirmado"
+          ? "Presença confirmada. Obrigado!"
+          : statusRsvp === "talvez"
+            ? "Resposta registrada como talvez."
+            : "Resposta registrada. Sentiremos sua falta!";
+      setMensagem({ tipo: "ok", texto: msg });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Erro ao confirmar.";
-      setMensagem({ tipo: "erro", texto: msg });
+      const erroTxt = error instanceof Error ? error.message : "Erro ao confirmar.";
+      setMensagem({ tipo: "erro", texto: erroTxt });
     }
   }
 
@@ -202,30 +223,151 @@ export default function PaginaCliente() {
 
           <form
             onSubmit={enviarPresenca}
-            className="mx-auto max-w-xl rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8"
+            className="mx-auto max-w-xl space-y-5 rounded-[14px] border border-[color:var(--hairline)] bg-[color:var(--surface)] p-8"
           >
-            <label
-              htmlFor="nomeConvidado"
-              className="block text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted)]"
-            >
-              Seu nome
-            </label>
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            {/* Nome */}
+            <div>
+              <label
+                htmlFor="nomeConvidado"
+                className="block text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted)]"
+              >
+                Seu nome
+              </label>
               <input
                 id="nomeConvidado"
                 type="text"
                 value={nomeConvidado}
                 onChange={(event) => setNomeConvidado(event.target.value)}
                 placeholder="Nome completo"
-                className="eventify-input flex-1"
+                className="eventify-input mt-2 w-full"
+                required
               />
-              <button type="submit" className="eventify-button eventify-button-primary">
-                Confirmar <span aria-hidden>→</span>
-              </button>
             </div>
+
+            {/* Status */}
+            <div>
+              <span className="block text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted)]">
+                Você vai?
+              </span>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {([
+                  { val: "confirmado", label: "✓ Vou", cls: "border-[color:var(--green,#5B7A4F)] bg-[rgba(91,122,79,0.08)] text-[color:var(--green,#5B7A4F)]" },
+                  { val: "talvez", label: "? Talvez", cls: "border-[color:var(--gold)] bg-[var(--gold-soft)] text-[color:var(--gold-2)]" },
+                  { val: "recusou", label: "✗ Não vou", cls: "border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] text-[color:var(--rose,#A85462)]" },
+                ] as const).map((opt) => {
+                  const ativo = statusRsvp === opt.val;
+                  return (
+                    <button
+                      key={opt.val}
+                      type="button"
+                      onClick={() => setStatusRsvp(opt.val)}
+                      className={`rounded-[8px] border-2 py-2.5 text-[13px] font-medium transition ${
+                        ativo
+                          ? opt.cls
+                          : "border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--muted)] hover:border-[color:var(--ink-2)]"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Acompanhantes (só se vai ou talvez) */}
+            {statusRsvp !== "recusou" && (
+              <>
+                <div>
+                  <label
+                    htmlFor="acompanhantes"
+                    className="block text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted)]"
+                  >
+                    Vou levar acompanhantes
+                  </label>
+                  <div className="mt-2 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setAcompanhantes(Math.max(0, acompanhantes - 1))}
+                      className="h-9 w-9 rounded-[6px] border border-[color:var(--hairline-2)] bg-[color:var(--paper)] text-[16px] text-[color:var(--ink)] hover:bg-[color:var(--paper-2)]"
+                      aria-label="Menos um"
+                    >
+                      −
+                    </button>
+                    <input
+                      id="acompanhantes"
+                      type="number"
+                      min={0}
+                      max={20}
+                      value={acompanhantes}
+                      onChange={(e) =>
+                        setAcompanhantes(Math.max(0, Math.min(20, Number(e.target.value) || 0)))
+                      }
+                      className="eventify-input w-20 text-center"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setAcompanhantes(Math.min(20, acompanhantes + 1))}
+                      className="h-9 w-9 rounded-[6px] border border-[color:var(--hairline-2)] bg-[color:var(--paper)] text-[16px] text-[color:var(--ink)] hover:bg-[color:var(--paper-2)]"
+                      aria-label="Mais um"
+                    >
+                      +
+                    </button>
+                    <span className="text-[12.5px] text-[color:var(--muted)]">
+                      {acompanhantes === 0 ? "sozinho(a)" : acompanhantes === 1 ? "1 pessoa" : `${acompanhantes} pessoas`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Restrição alimentar */}
+                <div>
+                  <label
+                    htmlFor="restricao"
+                    className="block text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted)]"
+                  >
+                    Restrição alimentar <span className="normal-case opacity-60">(opcional)</span>
+                  </label>
+                  <input
+                    id="restricao"
+                    type="text"
+                    value={restricaoAlimentar}
+                    onChange={(e) => setRestricaoAlimentar(e.target.value)}
+                    placeholder="vegetariano, sem lactose, alérgico a..."
+                    maxLength={200}
+                    className="eventify-input mt-2 w-full"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Recado */}
+            <div>
+              <label
+                htmlFor="recado"
+                className="block text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted)]"
+              >
+                Recado <span className="normal-case opacity-60">(opcional)</span>
+              </label>
+              <textarea
+                id="recado"
+                value={recado}
+                onChange={(e) => setRecado(e.target.value)}
+                placeholder="parabéns, deixe uma mensagem carinhosa..."
+                rows={2}
+                maxLength={500}
+                className="eventify-input mt-2 w-full resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="eventify-button eventify-button-primary w-full justify-center"
+            >
+              Enviar resposta <span aria-hidden>→</span>
+            </button>
+
             {mensagem && (
               <p
-                className={`mt-4 rounded-md border px-3 py-2 text-[13px] ${
+                className={`rounded-md border px-3 py-2 text-[13px] ${
                   mensagem.tipo === "erro"
                     ? "border-[color:var(--rose,#A85462)] bg-[rgba(168,84,98,0.06)] text-[color:var(--rose,#A85462)]"
                     : "border-[color:var(--green,#5B7A4F)] bg-[rgba(91,122,79,0.06)] text-[color:var(--green,#5B7A4F)]"

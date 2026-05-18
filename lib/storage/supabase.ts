@@ -28,7 +28,11 @@ function getClient() {
   return c;
 }
 
-function rowToEvento(row: EventoRow, convidados: string[] = []): EventoDados {
+function rowToEvento(
+  row: EventoRow,
+  convidados: string[] = [],
+  convidadosDetalhes: import("./types").ConvidadoDetalhado[] = []
+): EventoDados {
   return {
     id: row.id,
     nome: row.nome,
@@ -40,6 +44,7 @@ function rowToEvento(row: EventoRow, convidados: string[] = []): EventoDados {
     selectedPlan: row.selected_plan ?? undefined,
     briefing: row.briefing ?? {},
     convidados,
+    convidadosDetalhes,
     siteGerado: row.site_gerado ?? undefined,
     siteHtml: row.site_html ?? undefined,
     ownerId: row.owner_id,
@@ -49,22 +54,66 @@ function rowToEvento(row: EventoRow, convidados: string[] = []): EventoDados {
   };
 }
 
-async function fetchConvidadosMap(eventoIds: string[]) {
-  const map = new Map<string, string[]>();
-  if (eventoIds.length === 0) return map;
+type ConvidadoMaps = {
+  nomes: Map<string, string[]>;
+  detalhes: Map<string, import("./types").ConvidadoDetalhado[]>;
+};
+
+async function fetchConvidadosMap(eventoIds: string[]): Promise<ConvidadoMaps> {
+  const nomes = new Map<string, string[]>();
+  const detalhes = new Map<string, import("./types").ConvidadoDetalhado[]>();
+  if (eventoIds.length === 0) return { nomes, detalhes };
   const supabase = getClient();
-  const { data, error } = await supabase
+  // Tenta carregar colunas novas; se falhar (migration 0012 não aplicada),
+  // cai pro select mínimo.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: any[] | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let error: any = null;
+  const primary = await supabase
     .from("convidados")
-    .select("evento_id, nome")
+    .select("evento_id, nome, status, acompanhantes, restricao_alimentar, recado, confirmado_em")
     .in("evento_id", eventoIds)
     .order("confirmado_em", { ascending: true });
-  if (error) throw error;
-  for (const row of data ?? []) {
-    const arr = map.get(row.evento_id) ?? [];
-    arr.push(row.nome);
-    map.set(row.evento_id, arr);
+  data = primary.data;
+  error = primary.error;
+
+  if (error && /column.*does not exist/i.test(error.message || "")) {
+    const fallback = await supabase
+      .from("convidados")
+      .select("evento_id, nome, confirmado_em")
+      .in("evento_id", eventoIds)
+      .order("confirmado_em", { ascending: true });
+    data = fallback.data;
+    error = fallback.error;
   }
-  return map;
+  if (error) throw error;
+
+  for (const row of (data ?? []) as Array<{
+    evento_id: string;
+    nome: string;
+    status?: string;
+    acompanhantes?: number;
+    restricao_alimentar?: string | null;
+    recado?: string | null;
+    confirmado_em?: string;
+  }>) {
+    const arrNomes = nomes.get(row.evento_id) ?? [];
+    arrNomes.push(row.nome);
+    nomes.set(row.evento_id, arrNomes);
+
+    const arrDet = detalhes.get(row.evento_id) ?? [];
+    arrDet.push({
+      nome: row.nome,
+      status: (row.status as import("./types").RsvpStatus | undefined) ?? "confirmado",
+      acompanhantes: row.acompanhantes ?? 0,
+      restricaoAlimentar: row.restricao_alimentar ?? null,
+      recado: row.recado ?? null,
+      confirmadoEm: row.confirmado_em,
+    });
+    detalhes.set(row.evento_id, arrDet);
+  }
+  return { nomes, detalhes };
 }
 
 export const supabaseBackend: StorageBackend = {
@@ -84,7 +133,9 @@ export const supabaseBackend: StorageBackend = {
 
     const rows = (data ?? []) as EventoRow[];
     const map = await fetchConvidadosMap(rows.map((r) => r.id));
-    return rows.map((r) => rowToEvento(r, map.get(r.id) ?? []));
+    return rows.map((r) =>
+      rowToEvento(r, map.nomes.get(r.id) ?? [], map.detalhes.get(r.id) ?? [])
+    );
   },
 
   async getBySlug(slug) {
@@ -98,7 +149,7 @@ export const supabaseBackend: StorageBackend = {
     const row = (data ?? [])[0] as EventoRow | undefined;
     if (!row) return null;
     const map = await fetchConvidadosMap([row.id]);
-    return rowToEvento(row, map.get(row.id) ?? []);
+    return rowToEvento(row, map.nomes.get(row.id) ?? [], map.detalhes.get(row.id) ?? []);
   },
 
   async create(evento) {
@@ -165,7 +216,11 @@ export const supabaseBackend: StorageBackend = {
     if (error) throw error;
 
     const map = await fetchConvidadosMap([id]);
-    return rowToEvento(data as EventoRow, map.get(id) ?? partial.convidados ?? []);
+    return rowToEvento(
+      data as EventoRow,
+      map.nomes.get(id) ?? partial.convidados ?? [],
+      map.detalhes.get(id) ?? []
+    );
   },
 
   async remove(id) {
@@ -175,8 +230,33 @@ export const supabaseBackend: StorageBackend = {
   },
 
   async addConvidado(eventoId, nome) {
+    return this.addRsvp(eventoId, { nome });
+  },
+
+  async addRsvp(eventoId, dados) {
     const supabase = getClient();
-    const { error } = await supabase.from("convidados").insert({ evento_id: eventoId, nome });
+    const payload: Record<string, unknown> = {
+      evento_id: eventoId,
+      nome: dados.nome.trim(),
+    };
+    if (dados.status) payload.status = dados.status;
+    if (typeof dados.acompanhantes === "number") payload.acompanhantes = dados.acompanhantes;
+    if (dados.restricaoAlimentar !== undefined)
+      payload.restricao_alimentar = dados.restricaoAlimentar || null;
+    if (dados.recado !== undefined) payload.recado = dados.recado || null;
+
+    let { error } = await supabase.from("convidados").insert(payload);
+
+    // Fallback: se colunas novas não existem (migration 0012 não rodou),
+    // insere só com nome.
+    if (error && /column.*does not exist/i.test(error.message || "")) {
+      const retry = await supabase.from("convidados").insert({
+        evento_id: eventoId,
+        nome: dados.nome.trim(),
+      });
+      error = retry.error;
+    }
+
     if (error) {
       if (error.code === "23505") throw new Error("Esse nome já foi confirmado.");
       throw error;

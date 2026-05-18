@@ -59,14 +59,33 @@ export const localBackend: StorageBackend = {
     write(read().filter((e) => e.id !== id));
   },
   async addConvidado(eventoId, nome) {
+    return this.addRsvp(eventoId, { nome });
+  },
+  async addRsvp(eventoId, dados) {
     const list = read();
     const idx = list.findIndex((e) => e.id === eventoId);
     if (idx === -1) throw new Error("Evento não encontrado.");
+    const nome = dados.nome.trim();
     const convidados = list[idx].convidados ?? [];
     if (convidados.some((c) => c.toLowerCase() === nome.toLowerCase())) {
       throw new Error("Esse nome já foi confirmado.");
     }
-    list[idx] = { ...list[idx], convidados: [...convidados, nome] };
+    const detalhes = list[idx].convidadosDetalhes ?? [];
+    list[idx] = {
+      ...list[idx],
+      convidados: [...convidados, nome],
+      convidadosDetalhes: [
+        ...detalhes,
+        {
+          nome,
+          status: dados.status ?? "confirmado",
+          acompanhantes: dados.acompanhantes ?? 0,
+          restricaoAlimentar: dados.restricaoAlimentar ?? null,
+          recado: dados.recado ?? null,
+          confirmadoEm: new Date().toISOString(),
+        },
+      ],
+    };
     write(list);
   },
   async removeConvidado(eventoId, nome) {

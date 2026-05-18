@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { storage } from "@/lib/storage";
-import type { EventoDados } from "@/lib/storage/types";
+import type { EventoDados, RsvpPayload, ConvidadoDetalhado } from "@/lib/storage/types";
 
 export function useEventoPublico(slug: string | undefined) {
   const [evento, setEvento] = useState<EventoDados | null>(null);
@@ -33,18 +33,36 @@ export function useEventoPublico(slug: string | undefined) {
     void recarregar();
   }, [recarregar]);
 
-  const confirmarPresenca = useCallback(
-    async (nome: string) => {
+  const enviarRsvp = useCallback(
+    async (dados: RsvpPayload) => {
       if (!evento?.id) throw new Error("Evento sem identificador.");
-      await storage.addConvidado(evento.id, nome);
+      await storage.addRsvp(evento.id, dados);
+      const novoDetalhe: ConvidadoDetalhado = {
+        nome: dados.nome.trim(),
+        status: dados.status ?? "confirmado",
+        acompanhantes: dados.acompanhantes ?? 0,
+        restricaoAlimentar: dados.restricaoAlimentar ?? null,
+        recado: dados.recado ?? null,
+        confirmadoEm: new Date().toISOString(),
+      };
       setEvento((prev) =>
         prev
-          ? { ...prev, convidados: [...(prev.convidados ?? []), nome] }
+          ? {
+              ...prev,
+              convidados: [...(prev.convidados ?? []), dados.nome.trim()],
+              convidadosDetalhes: [...(prev.convidadosDetalhes ?? []), novoDetalhe],
+            }
           : prev
       );
     },
     [evento]
   );
 
-  return { evento, isLoading, erro, confirmarPresenca, recarregar };
+  /** @deprecated Use enviarRsvp({nome}) */
+  const confirmarPresenca = useCallback(
+    async (nome: string) => enviarRsvp({ nome }),
+    [enviarRsvp]
+  );
+
+  return { evento, isLoading, erro, enviarRsvp, confirmarPresenca, recarregar };
 }
